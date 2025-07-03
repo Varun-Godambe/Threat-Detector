@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ThreatSight - Documentation</title>
+    
+    <!-- External CSS -->
+    <link rel="stylesheet" href="style.css">
+
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- Google Fonts: Inter -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide-react@0.292.0/dist/lucide-react.js"></script>
+    <script src="https://unpkg.com/react@18/umd/react.development.js"></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
+    
+    <script>
+        // This script is for the theme switcher on the docs page
+        document.addEventListener('DOMContentLoaded', () => {
+            const L = {};
+            window.onload = () => {
+                const root = ReactDOM.createRoot(document.getElementById('lucide-icons-container'));
+                const icons = React.createElement(React.Fragment, null,
+                Object.keys(lucide).map(iconName =>
+                    React.createElement(lucide[iconName], { key: iconName, id: `lucide-${iconName.toLowerCase()}` })
+                )
+                );
+                root.render(icons);
+
+                Object.keys(lucide).forEach(iconName => {
+                    L[iconName] = () => {
+                        const iconElement = document.getElementById(`lucide-${iconName.toLowerCase()}`);
+                        return iconElement ? iconElement.outerHTML : '';
+                    }
+                });
+                
+                document.getElementById('header-logo').innerHTML = L.ShieldCheck();
+                document.getElementById('sun-icon').innerHTML = L.Sun();
+                document.getElementById('moon-icon').innerHTML = L.Moon();
+            };
+
+            const themeToggle = document.getElementById('theme-toggle');
+            const htmlEl = document.documentElement;
+
+            const savedTheme = localStorage.getItem('theme') || (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
+            
+            if (savedTheme === 'dark') {
+                htmlEl.classList.add('dark');
+                themeToggle.checked = true;
+            } else {
+                htmlEl.classList.remove('dark');
+                themeToggle.checked = false;
+            }
+
+            themeToggle.addEventListener('change', () => {
+                if (themeToggle.checked) {
+                    htmlEl.classList.add('dark');
+                    localStorage.setItem('theme', 'dark');
+                } else {
+                    htmlEl.classList.remove('dark');
+                    localStorage.setItem('theme', 'light');
+                }
+            });
+        });
+    </script>
+</head>
+<body class="bg-background text-foreground antialiased">
+    <div id="lucide-icons-container"></div>
+
+    <!-- Header -->
+    <header class="sticky top-0 z-50 w-full border-b border-custom bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+        <div class="container mx-auto flex h-14 max-w-screen-2xl items-center justify-between px-4 md:px-6">
+            <a href="index.html" class="flex items-center space-x-2">
+                <span id="header-logo" class="h-6 w-6"></span>
+                <span class="font-bold text-lg">ThreatSight</span>
+            </a>
+            <nav class="hidden items-center space-x-6 text-sm font-medium md:flex">
+                <a href="index.html#analyzer" class="transition-colors hover:text-primary">Analyzer</a>
+                <a href="#" class="transition-colors text-primary">About & Docs</a>
+            </nav>
+            <div class="flex items-center space-x-4">
+                <label for="theme-toggle" class="flex items-center cursor-pointer text-sm">
+                    <span id="sun-icon" class="h-5 w-5"></span>
+                    <div class="relative inline-block w-10 mx-2 align-middle select-none transition duration-200 ease-in">
+                        <input type="checkbox" name="theme-toggle" id="theme-toggle" class="theme-toggle-checkbox absolute block w-5 h-5 rounded-full bg-card border-4 border-custom appearance-none cursor-pointer"/>
+                        <label for="theme-toggle" class="theme-toggle-label block overflow-hidden h-5 rounded-full bg-muted cursor-pointer"></label>
+                    </div>
+                    <span id="moon-icon" class="h-5 w-5"></span>
+                </label>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="container mx-auto max-w-screen-2xl p-4 md:p-6">
+        <!-- About & Docs Section -->
+        <section id="about" class="py-12 md:py-16">
+            <div class="bg-card border border-custom rounded-xl shadow-lg p-4 sm:p-6 md:p-8">
+                <h2 class="text-3xl font-bold tracking-tight mb-6">About & Documentation</h2>
+                
+                <div class="space-y-8 prose prose-slate dark:prose-invert max-w-none text-card-foreground">
+                    <div id="docs-intro">
+                        <h3 class="text-xl font-semibold">1. Introduction</h3>
+                        <p>ThreatSight is a static analysis tool designed for developers, security analysts, and hobbyists. Its core mission is to provide a quick, accessible, and private way to scan digital assets for common security risks. Unlike other tools, ThreatSight performs all analysis directly in your browser, ensuring your files, logs, and data never leave your machine.</p>
+                    </div>
+                    
+                    <div id="docs-features">
+                        <h3 class="text-xl font-semibold">2. Features Deep Dive</h3>
+                        <p>ThreatSight is equipped with specialized analyzers for different types of assets.</p>
+                        
+                        <h4 class="font-semibold mt-4">2.1 File Analysis</h4>
+                        <p>The file analyzer inspects the content of scripts and configuration files for known anti-patterns and vulnerabilities.</p>
+                        <ul class="list-disc list-inside space-y-1">
+                            <li><strong>PowerShell (.ps1):</strong> Detects suspicious cmdlets (e.g., <code>Invoke-Expression</code>, <code>IEX</code>), Base64 encoded commands, and remote download patterns that are common in malicious scripts.</li>
+                            <li><strong>Python (.py):</strong> Scans for the use of insecure modules (e.g., <code>pickle</code>, <code>shelve</code>), potential command injection points (e.g., <code>os.system</code>), and hardcoded secrets like API keys.</li>
+                            <li><strong>Shell Scripts (.sh):</strong> Looks for risky commands (e.g., <code>rm -rf</code>), insecure use of <code>curl</code> or <code>wget</code>, and variables being executed directly.</li>
+                            <li><strong>JSON (.json):</strong> Checks for keys that might contain sensitive data (e.g., "password", "apiKey") and common misconfigurations.</li>
+                        </ul>
+
+                        <h4 class="font-semibold mt-4">2.2 Log Analysis</h4>
+                        <p>The log analyzer uses pattern matching to identify suspicious activity within raw log data. It can detect patterns indicative of brute-force attempts, multiple failed logins from a single IP, and unusual user-agent strings.</p>
+                        
+                        <h4 class="font-semibold mt-4">2.3 URL Scanning</h4>
+                        <p>This feature performs a basic check of a URL against a hardcoded list of known malicious domains. It serves as a preliminary check for phishing or malware-hosting sites. (Note: This is a demo feature and not a comprehensive blacklist).</p>
+                    </div>
+                    
+                    <div id="docs-privacy">
+                        <h3 class="text-xl font-semibold">3. Privacy by Design</h3>
+                        <p><strong>Your data stays yours.</strong> We cannot stress this enough. ThreatSight is built entirely with client-side JavaScript. When you upload a file or paste text, the analysis happens locally on your computer. No files, no text, and no metadata are ever transmitted to a server. This makes it safe to analyze sensitive or proprietary code without privacy concerns.</p>
+                    </div>
+
+                    <div id="docs-faq">
+                        <h3 class="text-xl font-semibold">4. Frequently Asked Questions (FAQ)</h3>
+                        <dl class="space-y-4">
+                            <div>
+                                <dt class="font-semibold">Is ThreatSight a replacement for an antivirus or a full-fledged SAST tool?</dt>
+                                <dd>No. ThreatSight is a lightweight, first-pass analysis tool. It is meant to supplement, not replace, professional security software. It's great for quick checks and educational purposes but does not provide the comprehensive protection of an antivirus or a commercial Static Application Security Testing (SAST) solution.</dd>
+                            </div>
+                            <div>
+                                <dt class="font-semibold">How can I contribute?</dt>
+                                <dd>This is a personal project, but feedback is always welcome! If you have ideas for new detection rules or features, feel free to reach out or fork the project on GitHub.</dd>
+                            </div>
+                        </dl>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <!-- Footer -->
+    <footer class="py-6 md:px-8 md:py-0 border-t border-custom">
+        <div class="container flex flex-col items-center justify-between gap-4 md:h-24 md:flex-row">
+            <p class="text-center text-sm leading-loose text-muted-foreground md:text-left">
+                 © 2025 | Built by <a href="https://www.linkedin.com/in/varun-godambe-85781b1a0/" target="_blank" rel="noreferrer" class="font-medium underline underline-offset-4">Varun Godambe</a>. The source code is available on 
+                <a href="https://github.com/Varun-Godambe/Threat-Detector" target="_blank" rel="noreferrer" class="font-medium underline underline-offset-4">GitHub</a>.
+            </p>
+        </div>
+    </footer>
+</body>
+</html>
