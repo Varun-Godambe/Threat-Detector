@@ -44,7 +44,6 @@ body {
 }
 
 /* Custom utility classes using theme variables */
-/* These allow Tailwind to work with our CSS variables */
 .bg-background { background-color: rgb(var(--background)); }
 .text-foreground { color: rgb(var(--foreground)); }
 .bg-primary { background-color: rgb(var(--primary)); }
@@ -83,4 +82,10 @@ html {
 /* For Lucide Icons - hide the container */
 #lucide-icons-container {
     display: none;
+}
+
+/* Drag and Drop Area Highlight */
+#log-drop-area.highlight {
+    border-color: rgb(var(--primary));
+    background-color: rgba(var(--primary), 0.1);
 }
