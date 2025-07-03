@@ -2,8 +2,6 @@ document.addEventListener('DOMContentLoaded', () => {
     // --- Icon Setup ---
     const L = {};
     
-    // The Lucide script in the HTML needs to load first.
-    // We use window.onload to ensure all external scripts, including Lucide, are ready.
     window.onload = () => {
         const root = ReactDOM.createRoot(document.getElementById('lucide-icons-container'));
         const icons = React.createElement(React.Fragment, null,
@@ -13,7 +11,6 @@ document.addEventListener('DOMContentLoaded', () => {
         );
         root.render(icons);
 
-        // Create a mapping for easy access after rendering
         Object.keys(lucide).forEach(iconName => {
             L[iconName] = () => {
                 const iconElement = document.getElementById(`lucide-${iconName.toLowerCase()}`);
@@ -21,12 +18,10 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         });
 
-        // Now that Lucide icons are ready, populate the static icons on the page
         populateIcons();
     };
 
     function populateIcons() {
-        // This check ensures we don't run before L is populated
         if (!L.ShieldCheck) return; 
 
         document.getElementById('header-logo').innerHTML = L.ShieldCheck();
@@ -37,6 +32,7 @@ document.addEventListener('DOMContentLoaded', () => {
         document.querySelector('.icon-link').innerHTML = L.Link();
         document.querySelector('.icon-code').innerHTML = L.Code();
         document.querySelector('.icon-scan-line').innerHTML = L.ScanLine();
+        document.querySelector('.icon-upload-cloud').innerHTML = L.UploadCloud();
     }
 
 
@@ -44,7 +40,6 @@ document.addEventListener('DOMContentLoaded', () => {
     const themeToggle = document.getElementById('theme-toggle');
     const htmlEl = document.documentElement;
 
-    // Check for saved theme in localStorage or use system preference
     const savedTheme = localStorage.getItem('theme') || (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
     
     if (savedTheme === 'dark') {
@@ -55,7 +50,6 @@ document.addEventListener('DOMContentLoaded', () => {
         themeToggle.checked = false;
     }
 
-    // Add event listener for theme toggle
     themeToggle.addEventListener('change', () => {
         if (themeToggle.checked) {
             htmlEl.classList.add('dark');
@@ -76,24 +70,59 @@ document.addEventListener('DOMContentLoaded', () => {
             const tabName = tab.dataset.tab;
             activeTab = tabName;
 
-            // Update tab styles
-            tabs.forEach(t => {
-                t.classList.remove('border-primary', 'text-primary');
-                t.classList.add('border-transparent', 'text-muted-foreground', 'hover:text-foreground', 'hover:border-border-custom');
-            });
+            tabs.forEach(t => t.classList.remove('border-primary', 'text-primary'));
             tab.classList.add('border-primary', 'text-primary');
-            tab.classList.remove('border-transparent', 'text-muted-foreground', 'hover:text-foreground', 'hover:border-border-custom');
 
-            // Show/hide panels
             panels.forEach(panel => {
-                if (panel.id === `${tabName}-panel`) {
-                    panel.classList.remove('hidden');
-                } else {
-                    panel.classList.add('hidden');
-                }
+                panel.id === `${tabName}-panel` ? panel.classList.remove('hidden') : panel.classList.add('hidden');
             });
         });
     });
+
+    // --- Drag and Drop for Log Files ---
+    const logDropArea = document.getElementById('log-drop-area');
+    const logFileInput = document.getElementById('log-file-input');
+    const logTextInput = document.getElementById('log-input');
+
+    logDropArea.addEventListener('click', () => logFileInput.click());
+    logFileInput.addEventListener('change', () => {
+        if (logFileInput.files.length > 0) {
+            handleLogFile(logFileInput.files[0]);
+        }
+    });
+
+    ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
+        logDropArea.addEventListener(eventName, preventDefaults, false);
+    });
+
+    function preventDefaults(e) {
+        e.preventDefault();
+        e.stopPropagation();
+    }
+
+    ['dragenter', 'dragover'].forEach(eventName => {
+        logDropArea.addEventListener(eventName, () => logDropArea.classList.add('highlight'), false);
+    });
+
+    ['dragleave', 'drop'].forEach(eventName => {
+        logDropArea.addEventListener(eventName, () => logDropArea.classList.remove('highlight'), false);
+    });
+
+    logDropArea.addEventListener('drop', (e) => {
+        const dt = e.dataTransfer;
+        const files = dt.files;
+        if (files.length > 0) {
+            handleLogFile(files[0]);
+        }
+    }, false);
+
+    async function handleLogFile(file) {
+        loaderText.textContent = `Reading ${file.name}...`;
+        const fileContent = await readFileAsText(file);
+        logTextInput.value = fileContent;
+        // Optionally, trigger analysis immediately after drop/select
+        // analyzeBtn.click(); 
+    }
 
     // --- Analysis Logic ---
     const analyzeBtn = document.getElementById('analyze-btn');
@@ -108,44 +137,42 @@ document.addEventListener('DOMContentLoaded', () => {
         resultsContainer.innerHTML = '';
         
         let findings = [];
+        const agent = new ThreatAnalysisAgent();
         
         try {
             switch(activeTab) {
                 case 'file':
                     const fileInput = document.getElementById('file-input');
-                    if (!fileInput.files || fileInput.files.length === 0) {
-                        throw new Error("Please select a file to analyze.");
-                    }
+                    if (!fileInput.files || fileInput.files.length === 0) throw new Error("Please select a file to analyze.");
                     const file = fileInput.files[0];
                     loaderText.textContent = `Reading ${file.name}...`;
                     const fileContent = await readFileAsText(file);
                     loaderText.textContent = `Analyzing ${file.name}...`;
-                    findings = analyzeFile(fileContent, file.name);
+                    findings = agent.analyzeFile(fileContent, file.name);
                     break;
                 case 'log':
-                    const logInput = document.getElementById('log-input').value;
+                    const logInput = logTextInput.value;
                     if (!logInput.trim()) throw new Error("Log input is empty.");
                     loaderText.textContent = 'Analyzing log data...';
-                    findings = analyzeLog(logInput);
+                    findings = agent.analyzeLog(logInput);
                     break;
                 case 'url':
                     const urlInput = document.getElementById('url-input').value;
                     if (!urlInput.trim()) throw new Error("URL input is empty.");
                     loaderText.textContent = `Scanning URL: ${urlInput}...`;
-                    findings = analyzeUrl(urlInput);
+                    findings = agent.analyzeUrl(urlInput);
                     break;
                 case 'snippet':
                     const snippetInput = document.getElementById('snippet-input').value;
                     if (!snippetInput.trim()) throw new Error("Snippet is empty.");
                     loaderText.textContent = 'Analyzing snippet...';
-                    findings = analyzeFile(snippetInput, 'snippet.txt');
+                    findings = agent.analyzeFile(snippetInput, 'snippet.txt');
                     break;
             }
         } catch (error) {
             findings = [{ level: 'error', title: 'Analysis Error', description: error.message }];
         }
 
-        // Simulate analysis time for better UX
         setTimeout(() => {
             resultsLoader.classList.add('hidden');
             displayResults(findings);
@@ -172,6 +199,11 @@ document.addEventListener('DOMContentLoaded', () => {
             `;
             return;
         }
+
+        findings.sort((a, b) => {
+            const severity = { critical: 3, warning: 2, info: 1, error: 3 };
+            return (severity[b.level] || 0) - (severity[a.level] || 0);
+        });
 
         findings.forEach(finding => {
             const levelClasses = {
@@ -205,157 +237,170 @@ document.addEventListener('DOMContentLoaded', () => {
              .replace(/'/g, "&#039;");
     }
 
-    // --- ANALYSIS FUNCTIONS ---
-
-    function analyzeFile(content, filename) {
-        const extension = filename.split('.').pop().toLowerCase();
-        let findings = [];
-        switch(extension) {
-            case 'ps1':
-                findings = findings.concat(analyzePowerShell(content));
-                break;
-            case 'py':
-                findings = findings.concat(analyzePython(content));
-                break;
-            case 'sh':
-                findings = findings.concat(analyzeShell(content));
-                break;
-            case 'json':
-                findings = findings.concat(analyzeJson(content));
-                break;
-            default: // For snippets or unknown files
-                findings = findings.concat(analyzePowerShell(content), analyzePython(content), analyzeShell(content));
-        }
-        return findings;
-    }
-
-    function analyzePowerShell(content) {
-        const findings = [];
-        const lines = content.split('\n');
-        const criticalPatterns = {
-            'Invoke-Expression': 'The `Invoke-Expression` cmdlet (or `iex` alias) can execute arbitrary commands and is a major security risk if used with untrusted input.',
-            'FromBase64String': 'Decoding Base64 strings can be a technique to obfuscate malicious code. Review the source of the encoded data carefully.'
-        };
-
-        lines.forEach((line) => {
-            for (const pattern in criticalPatterns) {
-                if (new RegExp(pattern, 'i').test(line)) {
-                    findings.push({
-                        level: 'critical',
-                        title: `Suspicious PowerShell Command: \`${pattern}\``,
-                        description: criticalPatterns[pattern],
-                        context: line.trim()
-                    });
-                }
+    // --- THREAT ANALYSIS AGENT ---
+    class ThreatAnalysisAgent {
+        analyzeFile(content, filename) {
+            const extension = filename.split('.').pop().toLowerCase();
+            let findings = [];
+            switch(extension) {
+                case 'ps1': findings = this._analyzePowerShell(content); break;
+                case 'py': findings = this._analyzePython(content); break;
+                case 'sh': findings = this._analyzeShell(content); break;
+                case 'json': findings = this._analyzeJson(content); break;
+                default:
+                    findings = [
+                        ...this._analyzePowerShell(content), 
+                        ...this._analyzePython(content), 
+                        ...this._analyzeShell(content)
+                    ];
             }
-        });
-        return findings;
-    }
+            return findings;
+        }
 
-    function analyzePython(content) {
-        const findings = [];
-        const lines = content.split('\n');
-        const warningPatterns = {
-            'os.system': '`os.system` executes a shell command. If the command string is derived from user input, it can lead to command injection.',
-            'pickle.load': 'Loading pickled data from an untrusted source is insecure and can lead to arbitrary code execution.',
-            'subprocess.call.*shell=True': 'Using `shell=True` with `subprocess` can be dangerous if the command is constructed from external input.'
-        };
-
-        lines.forEach((line) => {
-            for (const pattern in warningPatterns) {
-                if (new RegExp(pattern).test(line)) {
-                    findings.push({
-                        level: 'warning',
-                        title: `Potential Python Vulnerability: \`${pattern.split('.')[0]}\``,
-                        description: warningPatterns[pattern],
-                        context: line.trim()
-                    });
+        _analyzePowerShell(content) {
+            const findings = [];
+            const criticalPatterns = {
+                'Invoke-Expression': 'The `Invoke-Expression` cmdlet (or `iex` alias) can execute arbitrary commands and is a major security risk.',
+                'FromBase64String': 'Decoding Base64 strings can be a technique to obfuscate malicious code.',
+                'New-Object Net.WebClient': 'Use of WebClient for downloads can be a precursor to fetching malicious payloads.'
+            };
+            content.split('\n').forEach(line => {
+                for (const [pattern, desc] of Object.entries(criticalPatterns)) {
+                    if (new RegExp(pattern, 'i').test(line)) {
+                        findings.push({ level: 'critical', title: `Suspicious PowerShell Command`, description: desc, context: line.trim() });
+                    }
                 }
+            });
+            return findings;
+        }
+
+        _analyzePython(content) {
+            const findings = [];
+            const warningPatterns = {
+                'os.system': '`os.system` executes a shell command, which can lead to command injection.',
+                'pickle.load': 'Loading pickled data from an untrusted source can lead to arbitrary code execution.',
+                'subprocess.call.*shell=True': 'Using `shell=True` with `subprocess` is dangerous if the command is from external input.',
+                'eval(': 'The `eval()` function can execute arbitrary code and should be avoided.'
+            };
+            content.split('\n').forEach(line => {
+                for (const [pattern, desc] of Object.entries(warningPatterns)) {
+                    if (new RegExp(pattern).test(line)) {
+                        findings.push({ level: 'warning', title: `Potential Python Vulnerability`, description: desc, context: line.trim() });
+                    }
+                }
+            });
+            return findings;
+        }
+
+        _analyzeShell(content) {
+            const findings = [];
+            if (content.includes('rm -rf /')) {
+                findings.push({ level: 'critical', title: 'Extremely Dangerous Command', description: 'The script contains `rm -rf /`, which can wipe the entire filesystem.', context: 'rm -rf /' });
             }
-        });
-        return findings;
-    }
-
-    function analyzeShell(content) {
-        const findings = [];
-        if (content.includes('rm -rf /')) {
-            findings.push({
-                level: 'critical',
-                title: 'Extremely Dangerous Command Found',
-                description: 'The script contains `rm -rf /`, which can wipe the entire filesystem. This is highly destructive.',
-                context: 'rm -rf /'
-            });
-        }
-        if (/(curl|wget)\s+.*\s+\|\s+sh/.test(content)) {
-             findings.push({
-                level: 'critical',
-                title: 'Remote Code Execution via Pipe to Shell',
-                description: 'Piping the output of `curl` or `wget` directly to a shell executes remote code without inspection. This is a very common attack vector.',
-                context: content.match(/(curl|wget)\s+.*\s+\|\s+sh/)[0]
-            });
-        }
-        return findings;
-    }
-    
-    function analyzeJson(content) {
-        const findings = [];
-        const sensitiveKeys = ['password', 'apiKey', 'secret', 'private_key', 'token'];
-        try {
-            JSON.parse(content); // Validate JSON
-            sensitiveKeys.forEach(key => {
-                if (new RegExp(`"${key}"\\s*:`, 'i').test(content)) {
-                    findings.push({
-                        level: 'warning',
-                        title: 'Potentially Sensitive Data Found',
-                        description: `The configuration file contains a key named "${key}", which may indicate a hardcoded secret.`,
-                        context: content.match(new RegExp(`"${key}"\\s*:\\s*".*?"`, 'i'))?.[0] || `"${key}"`
-                    });
-                }
-            });
-        } catch (e) { /* Not valid JSON, ignore */ }
-        return findings;
-    }
-
-    function analyzeLog(content) {
-        const findings = [];
-        const failedLoginCount = (content.match(/failed login/gi) || []).length;
-        if (failedLoginCount > 5) {
-            findings.push({
-                level: 'warning',
-                title: 'Multiple Failed Logins Detected',
-                description: `Found ${failedLoginCount} instances of "failed login", which could indicate a brute-force attempt.`,
-            });
+            if (/(curl|wget)\s+.*\s+\|\s+(bash|sh)/.test(content)) {
+                 findings.push({ level: 'critical', title: 'Remote Code Execution via Pipe to Shell', description: 'Piping the output of `curl` or `wget` directly to a shell executes remote code without inspection.', context: content.match(/(curl|wget)\s+.*\s+\|\s+(bash|sh)/)[0] });
+            }
+            return findings;
         }
         
-        const ipAddresses = [...new Set(content.match(/\b\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}\b/g) || [])];
-        if (ipAddresses.length > 10) {
-             findings.push({
-                level: 'info',
-                title: 'High Number of Unique IP Addresses',
-                description: `Detected ${ipAddresses.length} unique IP addresses in the log, which might be normal or could indicate distributed activity.`,
-            });
-        }
-        return findings;
-    }
-
-    function analyzeUrl(url) {
-        const maliciousDomains = ['evil-domain.com', 'malware-host.net', 'phishing-site.org'];
-        try {
-            const urlHostname = new URL(url).hostname;
-            if (maliciousDomains.some(domain => urlHostname.includes(domain))) {
-                return [{
-                    level: 'critical',
-                    title: 'Malicious URL Detected',
-                    description: `The URL "${url}" is on a list of known malicious domains. Do not visit this site.`,
-                }];
+        _analyzeJson(content) {
+            const findings = [];
+            const sensitiveKeys = /"(password|apiKey|secret|private_key|token)"\s*:/i;
+            if (sensitiveKeys.test(content)) {
+                findings.push({ level: 'warning', title: 'Potentially Sensitive Data', description: 'The configuration file may contain a hardcoded secret.', context: content.match(new RegExp(`"${sensitiveKeys.source.split('|')[0].slice(1,-1)}".*`, 'i'))?.[0] });
             }
-        } catch (e) {
-            return [{
-                level: 'error',
-                title: 'Invalid URL',
-                description: 'The provided URL is not valid. Please check the format (e.g., https://example.com).',
-            }];
+            return findings;
         }
-        return [];
+
+        analyzeLog(logContent) {
+            let findings = [];
+            const lines = logContent.split('\n').filter(line => line.trim() !== '');
+            const state = {
+                ipActivity: {}, // { ip: { failedLogins: [], successfulLogins: [], scans: [] } }
+                parsedLines: []
+            };
+
+            // Common Log Format Regex (IP, user, user, [date], "method path proto", status, size, "referer", "user-agent")
+            const clfRegex = /^(\S+) (\S+) (\S+) \[([\w:/]+\s[+\-]\d{4})\] "(\S+)\s(\S+)\s*(\S*)" (\d{3}) (\d+|-) "(.*?)" "(.*?)"/;
+
+            // 1. Parse and Structure Data
+            lines.forEach(line => {
+                const match = line.match(clfRegex);
+                if (match) {
+                    state.parsedLines.push({
+                        ip: match[1],
+                        timestamp: new Date(match[4].replace(':', ' ')),
+                        method: match[5],
+                        path: match[6],
+                        status: parseInt(match[8], 10),
+                        userAgent: match[11],
+                        raw: line
+                    });
+                }
+            });
+
+            if (state.parsedLines.length === 0) {
+                 return [{ level: 'info', title: 'Log Format Not Recognized', description: 'Could not parse logs using Common Log Format. Analysis will be based on simple text matching.' }];
+            }
+
+            // 2. Populate IP Activity State
+            state.parsedLines.forEach(line => {
+                if (!state.ipActivity[line.ip]) {
+                    state.ipActivity[line.ip] = { failedLogins: 0, successfulLogins: 0, scans: 0, activity: [] };
+                }
+                state.ipActivity[line.ip].activity.push(line);
+                if (line.status === 401 || line.status === 403) state.ipActivity[line.ip].failedLogins++;
+                if (line.status === 200 && (line.path.includes('login') || line.path.includes('admin'))) state.ipActivity[line.ip].successfulLogins++;
+                if (line.status === 404) state.ipActivity[line.ip].scans++;
+            });
+
+            // 3. Run Analysis Rules on State
+            for (const [ip, activity] of Object.entries(state.ipActivity)) {
+                // Rule: Brute-force detection
+                if (activity.failedLogins > 10) {
+                    findings.push({ level: 'critical', title: 'Brute-Force Attempt Detected', description: `IP address ${ip} had ${activity.failedLogins} failed login attempts.`, context: `IP: ${ip}` });
+                }
+                // Rule: Vulnerability Scanning
+                if (activity.scans > 20) {
+                    findings.push({ level: 'warning', title: 'Vulnerability Scanning Detected', description: `IP address ${ip} generated ${activity.scans} 'Not Found' (404) errors, indicating probing.`, context: `IP: ${ip}` });
+                }
+                // Rule: Attack Chain Correlation
+                if (activity.scans > 5 && activity.successfulLogins > 0) {
+                    findings.push({ level: 'critical', title: 'Potential Attack Chain Detected', description: `IP address ${ip} performed scanning activity and then successfully logged in.`, context: `IP: ${ip}` });
+                }
+            }
+            
+            // Rule: Suspicious User Agents
+            const suspiciousAgents = [/sqlmap/i, /nmap/i, /masscan/i, /acunetix/i, /nikto/i];
+            const agentActivity = {};
+            state.parsedLines.forEach(line => {
+                suspiciousAgents.forEach(agentRegex => {
+                    if (agentRegex.test(line.userAgent)) {
+                        if (!agentActivity[line.userAgent]) agentActivity[line.userAgent] = [];
+                        agentActivity[line.userAgent].push(line.ip);
+                    }
+                });
+            });
+
+            for (const [agent, ips] of Object.entries(agentActivity)) {
+                const uniqueIps = [...new Set(ips)];
+                findings.push({ level: 'warning', title: 'Suspicious User-Agent Detected', description: `The agent "${agent}" was seen from ${uniqueIps.length} IP(s).`, context: `Agent: ${agent}, IPs: ${uniqueIps.join(', ')}` });
+            }
+
+            return findings;
+        }
+
+        analyzeUrl(url) {
+            const maliciousDomains = ['evil-domain.com', 'malware-host.net', 'phishing-site.org'];
+            try {
+                const urlHostname = new URL(url).hostname;
+                if (maliciousDomains.some(domain => urlHostname.includes(domain))) {
+                    return [{ level: 'critical', title: 'Malicious URL Detected', description: `The URL "${url}" is on a list of known malicious domains.` }];
+                }
+            } catch (e) {
+                return [{ level: 'error', title: 'Invalid URL', description: 'The provided URL is not valid.' }];
+            }
+            return [];
+        }
     }
 });
