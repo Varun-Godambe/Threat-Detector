@@ -3,113 +3,63 @@ document.addEventListener('DOMContentLoaded', () => {
     const splashScreen = document.getElementById('splash-screen');
     const mainApp = document.getElementById('main-app');
     const enterBtn = document.getElementById('enter-btn');
-    
-    const fileDropArea = document.getElementById('file-drop-area');
+    const dropZone = document.getElementById('drop-zone');
     const fileInput = document.getElementById('file-input');
-    const fileNameDisplay = document.getElementById('file-name-display');
-    const logTextInput = document.getElementById('log-input');
-
-    const analyzeBtn = document.getElementById('analyze-btn');
-    const resultsSection = document.getElementById('results-section');
+    const fileNameDisplay = document.getElementById('fileName');
+    const analyzeBtn = document.getElementById('analyzeBtn');
+    const analysisSection = document.getElementById('analysis-section');
     const loader = document.getElementById('loader');
-    const loaderText = document.getElementById('loader-text');
     const resultsContainer = document.getElementById('results-container');
-    
     const themeToggle = document.getElementById('theme-toggle');
-    
+    const sunIcon = document.getElementById('theme-icon-sun');
+    const moonIcon = document.getElementById('theme-icon-moon');
+
     let currentFileContent = '';
     let currentFileArrayBuffer = null;
     let currentFileName = '';
-    let activeTab = 'file'; // Set default active tab
 
-    // --- Icon Setup ---
-    const L = {};
-    window.onload = () => {
-        const root = ReactDOM.createRoot(document.getElementById('lucide-icons-container'));
-        const icons = React.createElement(React.Fragment, null,
-          Object.keys(lucide).map(iconName =>
-            React.createElement(lucide[iconName], { key: iconName, id: `lucide-${iconName.toLowerCase()}` })
-          )
-        );
-        root.render(icons);
-
-        Object.keys(lucide).forEach(iconName => {
-            L[iconName] = () => {
-                const iconElement = document.getElementById(`lucide-${iconName.toLowerCase()}`);
-                return iconElement ? iconElement.outerHTML : '';
-            }
-        });
-
-        populateIcons();
+    // --- Theme Management ---
+    const applyTheme = (theme) => {
+        if (theme === 'dark') {
+            document.body.classList.add('dark');
+            sunIcon.classList.remove('hidden');
+            moonIcon.classList.add('hidden');
+        } else {
+            document.body.classList.remove('dark');
+            sunIcon.classList.add('hidden');
+            moonIcon.classList.remove('hidden');
+        }
     };
 
-    function populateIcons() {
-        if (!L.ShieldCheck) return; 
-        document.getElementById('header-logo').innerHTML = L.ShieldCheck();
-        document.getElementById('sun-icon').innerHTML = L.Sun();
-        document.getElementById('moon-icon').innerHTML = L.Moon();
-        document.getElementById('splash-logo').innerHTML = L.ShieldCheck({size: 64});
-        document.getElementById('privacy-header').innerHTML = `${L.Lock({class:'w-5 h-5 mr-2'})} Privacy & Data Handling`;
-        document.querySelector('.icon-file').innerHTML = L.File();
-        document.querySelector('.icon-file-text').innerHTML = L.FileText();
-        document.querySelector('.icon-link').innerHTML = L.Link();
-        document.querySelector('.icon-code').innerHTML = L.Code();
-        document.querySelector('.icon-scan-line').innerHTML = L.ScanLine();
-        document.querySelector('.icon-upload-cloud').innerHTML = L.UploadCloud();
-    }
+    const toggleTheme = () => {
+        const currentTheme = document.body.classList.contains('dark') ? 'dark' : 'light';
+        const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
+        localStorage.setItem('theme', newTheme);
+        applyTheme(newTheme);
+    };
 
-    // --- App Initialization ---
+    const savedTheme = localStorage.getItem('theme') || 'dark';
+    applyTheme(savedTheme);
+    
+    // --- Event Listeners ---
     enterBtn.addEventListener('click', () => {
         splashScreen.classList.add('hidden');
         mainApp.style.display = 'block';
         setTimeout(() => mainApp.classList.add('visible'), 50);
-    });
-
-    // --- Theme Switcher ---
-    const applyTheme = (theme) => {
-        if (theme === 'dark') {
-            document.documentElement.classList.add('dark');
-            themeToggle.checked = true;
-        } else {
-            document.documentElement.classList.remove('dark');
-            themeToggle.checked = false;
+        if (!localStorage.getItem('theme')) {
+            const prefersDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
+            applyTheme(prefersDark ? 'dark' : 'light');
         }
-    };
-    const savedTheme = localStorage.getItem('theme') || (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
-    applyTheme(savedTheme);
-    themeToggle.addEventListener('change', () => {
-        const newTheme = document.documentElement.classList.contains('dark') ? 'light' : 'dark';
-        localStorage.setItem('theme', newTheme);
-        applyTheme(newTheme);
-    });
-    
-    // --- Tab Navigation ---
-    const tabs = document.querySelectorAll('.tab-btn');
-    const panels = document.querySelectorAll('.tab-panel');
-    tabs.forEach(tab => {
-        tab.addEventListener('click', () => {
-            activeTab = tab.dataset.tab;
-            tabs.forEach(t => {
-                t.classList.remove('border-primary', 'text-primary');
-                t.classList.add('border-transparent', 'text-muted-foreground');
-            });
-            tab.classList.add('border-primary', 'text-primary');
-            tab.classList.remove('border-transparent', 'text-muted-foreground');
-            panels.forEach(panel => {
-                panel.id === `${activeTab}-panel` ? panel.classList.remove('hidden') : panel.classList.add('hidden');
-            });
-        });
     });
 
-    // --- File Handling & Drag and Drop ---
-    fileDropArea.addEventListener('click', () => fileInput.click());
+    dropZone.addEventListener('click', () => fileInput.click());
     fileInput.addEventListener('change', () => handleFileSelect(fileInput.files));
-    ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => fileDropArea.addEventListener(eventName, preventDefaults, false));
-    ['dragenter', 'dragover'].forEach(eventName => fileDropArea.addEventListener(eventName, () => fileDropArea.classList.add('highlight'), false));
-    ['dragleave', 'drop'].forEach(eventName => fileDropArea.addEventListener(eventName, () => fileDropArea.classList.remove('highlight'), false));
-    fileDropArea.addEventListener('drop', (e) => handleFileSelect(e.dataTransfer.files), false);
-    
-    function preventDefaults(e) { e.preventDefault(); e.stopPropagation(); }
+    analyzeBtn.addEventListener('click', startAnalysis);
+    themeToggle.addEventListener('click', toggleTheme);
+
+    dropZone.addEventListener('dragover', (e) => { e.preventDefault(); dropZone.classList.add('border-blue-500', 'bg-slate-50', 'dark:bg-slate-700/50'); });
+    dropZone.addEventListener('dragleave', () => { dropZone.classList.remove('border-blue-500', 'bg-slate-50', 'dark:bg-slate-700/50'); });
+    dropZone.addEventListener('drop', (e) => { e.preventDefault(); dropZone.classList.remove('border-blue-500', 'bg-slate-50', 'dark:bg-slate-700/50'); handleFileSelect(e.dataTransfer.files); });
 
     async function handleFileSelect(files) {
         if (!files || files.length === 0) return;
@@ -120,63 +70,63 @@ document.addEventListener('DOMContentLoaded', () => {
         const textPromise = readFileAsText(file);
         const bufferPromise = readFileAsArrayBuffer(file);
         
-        [currentFileContent, currentFileArrayBuffer] = await Promise.all([textPromise, bufferPromise]);
-    }
-
-    // --- Analysis Logic ---
-    analyzeBtn.addEventListener('click', async () => {
-        resultsSection.classList.remove('hidden');
-        loader.style.display = 'flex';
-        resultsContainer.innerHTML = '';
-        resultsContainer.classList.add('hidden');
-        
-        const agent = new ThreatAnalysisAgent();
-        let analysisPromise;
-
         try {
-            switch(activeTab) {
-                case 'log':
-                    const logInput = logTextInput.value;
-                    if (!logInput.trim()) throw new Error("Log input is empty.");
-                    analysisPromise = agent.analyzeLog(logInput);
-                    break;
-                case 'snippet':
-                    const snippetInput = document.getElementById('snippet-input').value;
-                    if (!snippetInput.trim()) throw new Error("Snippet is empty.");
-                    analysisPromise = agent.analyzeFile(snippetInput, 'snippet.txt', new TextEncoder().encode(snippetInput).buffer);
-                    break;
-                default: // 'file'
-                    if (!currentFileContent) throw new Error("Please select a file to analyze.");
-                    analysisPromise = agent.analyzeFile(currentFileContent, currentFileName, currentFileArrayBuffer);
-            }
-
-            const results = await analysisPromise;
-            displayResults(results);
-
+            [currentFileContent, currentFileArrayBuffer] = await Promise.all([textPromise, bufferPromise]);
+            analyzeBtn.disabled = false;
         } catch (error) {
-            console.error("Analysis failed:", error);
-            resultsContainer.innerHTML = `<p class="text-destructive text-center">${error.message}</p>`;
-        } finally {
-            loader.style.display = 'none';
-            resultsContainer.classList.remove('hidden');
+            console.error("Error reading file:", error);
+            fileNameDisplay.textContent = "Error reading file.";
+            analyzeBtn.disabled = true;
         }
-    });
-
+    }
+    
     function readFileAsText(file) { return new Promise((resolve, reject) => { const reader = new FileReader(); reader.onload = event => resolve(event.target.result); reader.onerror = error => reject(error); reader.readAsText(file); }); }
     function readFileAsArrayBuffer(file) { return new Promise((resolve, reject) => { const reader = new FileReader(); reader.onload = event => resolve(event.target.result); reader.onerror = error => reject(error); reader.readAsArrayBuffer(file); }); }
 
-    // --- Display Logic ---
-    function displayResults(results) {
-        if (!results) return;
-        
-        if (results.fileAnalysis) {
-            resultsContainer.innerHTML = createFileAnalysisCard(results.fileAnalysis);
+    // --- Analysis Orchestration ---
+    async function startAnalysis() {
+        if (!currentFileContent && !currentFileName) {
+            alert("Please select a file to analyze.");
             return;
         }
+        analysisSection.style.display = 'block';
+        resultsContainer.innerHTML = '';
+        resultsContainer.classList.add('hidden');
+        loader.style.display = 'flex';
+        analyzeBtn.disabled = true;
 
+        const agent = new ThreatAnalysisAgent();
+        let results;
+
+        try {
+            await new Promise(resolve => setTimeout(resolve, 1500)); 
+
+            if (currentFileName.endsWith('.log') || currentFileName.endsWith('.txt')) {
+                results = await agent.analyzeLog(currentFileContent);
+                displayLogResults(results);
+            } else {
+                results = agent.analyzeFile(currentFileContent, currentFileArrayBuffer);
+                displayFileResults(results);
+            }
+        } catch (error) {
+            console.error("Analysis failed:", error);
+            resultsContainer.innerHTML = `<p class="text-center text-red-500">Analysis failed: ${error.message}</p>`;
+        } finally {
+            loader.style.display = 'none';
+            resultsContainer.classList.remove('hidden');
+            analyzeBtn.disabled = false;
+        }
+    }
+
+    // --- Display Functions ---
+    function displayFileResults(results) {
+        resultsContainer.innerHTML = createFileAnalysisCard(results);
+    }
+    
+    function displayLogResults(results) {
         resultsContainer.innerHTML = `
             <div id="summary-container" class="mb-8"></div>
-            <div class="results-tabs flex justify-center space-x-4 md:space-x-8 mb-6 border-b border-custom">
+            <div class="results-tabs flex justify-center space-x-4 md:space-x-8 mb-6 border-b border-slate-200 dark:border-slate-700">
                 <button data-tab="anomalies" class="tab-btn-results">Anomaly Report</button>
                 <button data-tab="threat-intel" class="tab-btn-results">Threat Intelligence</button>
                 <button data-tab="attack-chain" class="tab-btn-results">Attack Chain</button>
@@ -208,20 +158,37 @@ document.addEventListener('DOMContentLoaded', () => {
         
         document.querySelector('.results-tabs button').click();
     }
-    
-    function createSummaryCard(summary) { const item = document.createElement('div'); item.className = 'p-6 rounded-lg bg-card border border-custom'; item.innerHTML = `<div class="flex items-start space-x-4"><div class="flex-shrink-0 p-2 bg-muted rounded-full">${L.BookOpen()}</div><div class="flex-1"><h3 class="text-xl font-semibold mb-2">Executive Summary</h3><p class="text-muted-foreground leading-relaxed">${summary}</p></div></div>`; return item.outerHTML; }
-    function createAnomalyCard({ title, content }) { const item = document.createElement('div'); item.className = 'p-4 rounded-lg border border-custom bg-card mb-4'; item.innerHTML = `<h5 class="font-semibold">${title}</h5><p class="text-sm text-muted-foreground mt-1">${content}</p>`; return item; }
-    function createFileAnalysisCard({ file_type, threat_level, summary }) { return `<div class="p-6 rounded-lg bg-card border border-custom"><h3 class="text-xl font-semibold mb-2">File Analysis Report</h3><p><strong>File Type:</strong> ${file_type}</p><p><strong>Threat Level:</strong> ${threat_level}</p><p class="mt-2"><strong>Summary:</strong><br>${summary}</p></div>`; }
-    function renderThreatIntel(ips) { const container = document.getElementById('threat-intel'); let tableHtml = `<div class="overflow-x-auto bg-card rounded-lg shadow border border-custom"><table class="w-full text-left"><thead><tr class="text-sm text-muted-foreground"><th class="p-4 font-semibold">IP Address</th><th class="p-4 font-semibold">Reputation</th></tr></thead><tbody>`; const threatIPs = ['192.168.0.101', '192.168.0.41']; ips.forEach(ip => { const isThreat = threatIPs.includes(ip); tableHtml += `<tr><td class="p-4 font-mono">${ip}</td><td class="p-4 font-semibold ${isThreat ? 'text-destructive' : 'text-green-500'}">${isThreat ? 'Known Malicious' : 'Nominal'}</td></tr>`; }); tableHtml += `</tbody></table></div>`; container.innerHTML = tableHtml; }
-    function renderAttackChain(steps) { const container = document.getElementById('attack-chain'); const chainContainer = document.createElement('div'); chainContainer.className = 'attack-chain'; steps.forEach((step, index) => { const stepEl = document.createElement('div'); stepEl.className = 'attack-step'; stepEl.style.animationDelay = `${index * 200}ms`; stepEl.innerHTML = `<div class="icon">${L.GitCommit()}</div><div class="text">${step}</div>`; chainContainer.appendChild(stepEl); if (index < steps.length - 1) { const connector = document.createElement('div'); connector.className = 'chain-connector'; connector.style.animationDelay = `${(index * 200) + 100}ms`; chainContainer.appendChild(connector); } }); container.innerHTML = ''; container.appendChild(chainContainer); }
 
-    // --- THREAT ANALYSIS AGENT (HYBRID V5 - Merging original logic) ---
+    function createFileAnalysisCard({ file_type, threat_level, summary, details }) {
+        const threatColors = { "None": "text-green-500", "Low": "text-yellow-500", "Medium": "text-orange-500", "High": "text-red-500", "Critical": "text-pink-500" };
+        const threatColor = threatColors[threat_level] || "text-gray-500";
+        let detailsHtml = details.map(d => `<li class="mt-2"><strong class="font-semibold">${d.title}:</strong> ${d.description}</li>`).join('');
+
+        return `
+            <div class="result-item p-6">
+                <div class="flex items-start space-x-4">
+                    <div class="flex-shrink-0 p-2 bg-slate-100 dark:bg-slate-900/50 rounded-full"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-8 h-8 text-blue-500"><path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z"></path><polyline points="14 2 14 8 20 8"></polyline></svg></div>
+                    <div class="flex-1">
+                        <h3 class="text-xl font-semibold text-slate-800 dark:text-white mb-2">File Analysis Report</h3>
+                        <p><strong class="text-slate-700 dark:text-slate-100">File Type:</strong> ${file_type}</p>
+                        <p><strong class="text-slate-700 dark:text-slate-100">Overall Threat Level:</strong> <span class="font-semibold ${threatColor}">${threat_level}</span></p>
+                        <p class="mt-2"><strong class="text-slate-700 dark:text-slate-100">Summary:</strong> ${summary}</p>
+                        ${detailsHtml ? `<ul class="mt-4 list-disc list-inside text-sm text-slate-600 dark:text-slate-300">${detailsHtml}</ul>` : ''}
+                    </div>
+                </div>
+            </div>`;
+    }
+    function createSummaryCard(summary) { return `<div class="result-item p-6"><div class="flex items-start space-x-4"><div class="flex-shrink-0 p-2 bg-slate-100 dark:bg-slate-900/50 rounded-full"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-8 h-8 text-blue-500"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"></path><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"></path></svg></div><div class="flex-1"><h3 class="text-xl font-semibold text-slate-800 dark:text-white mb-2">Executive Summary</h3><p class="text-slate-600 dark:text-slate-300 leading-relaxed">${summary}</p></div></div></div>`; }
+    function createAnomalyCard({ title, icon, content }) { const item = document.createElement('div'); item.className = 'result-item p-6'; item.innerHTML = `<div class="flex items-start space-x-4"><div class="flex-shrink-0 p-2 bg-slate-100 dark:bg-slate-900/50 rounded-full">${icon}</div><div class="flex-1"><h3 class="text-xl font-semibold text-slate-800 dark:text-white mb-2">${title}</h3><p class="text-slate-600 dark:text-slate-300 leading-relaxed">${content.replace(/\n/g, '<br>')}</p></div></div>`; return item; }
+    function renderThreatIntel(ips) { const container = document.getElementById('threat-intel'); let tableHtml = `<div class="overflow-x-auto bg-white dark:bg-slate-800/50 rounded-lg shadow"><table class="w-full text-left"><thead class="border-b border-slate-200 dark:border-slate-700"><tr class="text-sm text-slate-500 dark:text-slate-400"><th class="p-4 font-semibold">IP Address</th><th class="p-4 font-semibold">Reputation</th><th class="p-4 font-semibold">Status</th></tr></thead><tbody class="text-slate-600 dark:text-slate-300">`; const threatIPs = ['192.168.0.101', '192.168.0.41']; ips.forEach(ip => { const isThreat = threatIPs.includes(ip); tableHtml += `<tr class="border-b border-slate-200 dark:border-slate-700"><td class="p-4 font-mono">${ip}</td><td class="p-4"><span class="font-semibold ${isThreat ? 'text-red-500' : 'text-green-500'}">${isThreat ? 'Known Malicious' : 'Nominal'}</span></td><td class="p-4"><span class="px-3 py-1 text-xs font-medium rounded-full ${isThreat ? 'bg-red-100 text-red-700 dark:bg-red-500/20 dark:text-red-300' : 'bg-green-100 text-green-700 dark:bg-green-500/20 dark:text-green-300'}">${isThreat ? 'Threat Detected' : 'OK'}</span></td></tr>`; }); tableHtml += `</tbody></table></div>`; container.innerHTML = tableHtml; }
+    function renderAttackChain(steps) { const container = document.getElementById('attack-chain'); const chainContainer = document.createElement('div'); chainContainer.className = 'attack-chain'; steps.forEach((step, index) => { const stepEl = document.createElement('div'); stepEl.className = 'attack-step'; stepEl.style.animationDelay = `${index * 200}ms`; stepEl.innerHTML = `<div class="icon"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-6 h-6 text-blue-500"><path d="m18 6 4 4-4 4"></path><path d="m6 18-4-4 4-4"></path><path d="M14.5 4h-5L6 20h5l3.5-16z"></path></svg></div><div class="text">${step}</div>`; chainContainer.appendChild(stepEl); if (index < steps.length - 1) { const connector = document.createElement('div'); connector.className = 'chain-connector'; connector.style.animationDelay = `${(index * 200) + 100}ms`; chainContainer.appendChild(connector); } }); container.innerHTML = ''; container.appendChild(chainContainer); }
+
+    // --- THREAT ANALYSIS AGENT ---
     class ThreatAnalysisAgent {
         _anonymizeLogContent(content) {
             let anonymizedContent = content;
             const ipMap = new Map(); let ipCounter = 1;
             const userMap = new Map(); let userCounter = 1;
-            
             anonymizedContent = anonymizedContent.replace(/(\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3})/g, (ip) => {
                 if (!ipMap.has(ip)) ipMap.set(ip, `IP_ADDRESS_${ipCounter++}`);
                 return ipMap.get(ip);
@@ -235,53 +202,55 @@ document.addEventListener('DOMContentLoaded', () => {
 
         async _callSimulatedApi(prompt, content) {
             await new Promise(resolve => setTimeout(resolve, 200 + Math.random() * 300));
-            if (prompt.includes("Executive Summary")) return "An automated data exfiltration attack was identified, originating from multiple suspicious IP addresses. The attacker utilized a script to make repetitive, hourly API calls to wildcard endpoints to scrape machine status data. The activity persisted across multiple sessions, indicating a determined effort to exfiltrate data over time.";
-            if (prompt.includes("attack chain")) return JSON.parse('["Initial suspicious login from USER_C at 2021-06-25T16:14:54.000Z.","Simultaneous login from a near-identical account (USER_B) from a different IP.","Automated script initiated hourly API calls to `factory=*` endpoints.","Session expired, causing a series of \'401 Unauthorized\' errors.","Attacker re-authenticated on 2021-06-26T16:04:54.000Z and resumed the automated requests."]');
-            if (prompt.includes("automated behavior") && content.includes("api/factory/machine/status?factory=*")) return { title: "Automated Behavior Detected", content: "Repetitive requests to wildcard endpoints suggest a script, not manual user activity." };
-            if (prompt.includes("simultaneous logins") && content.includes("2021-06-25T16:14:54.000Z")) return { title: "Suspicious Simultaneous Logins", content: "Two near-identical user IDs logged in from different IPs at the same time." };
+            if (prompt.includes("Executive Summary")) return "An automated data exfiltration attack was identified, originating from multiple suspicious IP addresses. The attacker utilized a script to make repetitive, hourly API calls to wildcard endpoints to scrape machine status data.";
+            if (prompt.includes("attack chain")) return JSON.parse('["Initial suspicious login from USER_C.","Simultaneous login from a near-identical account (USER_B).","Automated script initiated hourly API calls to `factory=*` endpoints.","Attacker re-authenticated and resumed the automated requests."]');
+            if (prompt.includes("automated behavior") && content.includes("api/factory/machine/status?factory=*")) return { title: "Automated Behavior Detected", icon: `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-8 h-8 text-blue-500"><path d="M12 8v4l3 3"></path><path d="M12 21a9 9 0 1 0-9-9"></path></svg>`, content: "Repetitive requests to wildcard endpoints suggest a script." };
+            if (prompt.includes("simultaneous logins") && content.includes("2021-06-25T16:14:54.000Z")) return { title: "Suspicious Simultaneous Logins", icon: `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-8 h-8 text-yellow-500"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M22 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg>`, content: "Two near-identical user IDs logged in from different IPs at the same time." };
             return null;
         }
 
         async analyzeLog(logContent) {
             const anonymizedLogs = this._anonymizeLogContent(logContent);
             const uniqueIPs = [...new Set(logContent.match(/(\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3})/g) || [])];
-
             const [summary, anomalies, attackChain] = await Promise.all([
                 this._callSimulatedApi("Executive Summary", anonymizedLogs),
-                Promise.all([
-                    this._callSimulatedApi("automated behavior", anonymizedLogs),
-                    this._callSimulatedApi("simultaneous logins", anonymizedLogs)
-                ]),
+                Promise.all([ this._callSimulatedApi("automated behavior", anonymizedLogs), this._callSimulatedApi("simultaneous logins", anonymizedLogs) ]),
                 this._callSimulatedApi("attack chain", anonymizedLogs)
             ]);
-            
-            return {
-                summary,
-                anomalies: anomalies.filter(a => a),
-                attackChain,
-                threatIntel: uniqueIPs
-            };
+            return { summary, anomalies: anomalies.filter(a => a), attackChain, threatIntel: uniqueIPs };
         }
         
-        analyzeFile(content, filename, arrayBuffer) {
-            const extension = filename.split('.').pop().toLowerCase();
-            if (['ps1', 'py', 'sh', 'json'].includes(extension)) {
-                let summary = 'Basic script analysis complete. No high-risk patterns found.';
-                let threat_level = 'Low';
-                if (content.includes("Invoke-Expression")) {
-                    summary = "Detected use of Invoke-Expression, which can execute arbitrary code.";
-                    threat_level = "High";
+        analyzeFile(content, arrayBuffer) {
+            let details = [];
+            let threat_level = 'None';
+            const view = new Uint8Array(arrayBuffer);
+
+            const signatures = { '4D 5A': 'Windows Executable (MZ)', '7F 45 4C 46': 'Linux Executable (ELF)' };
+            const fileSignature = Array.from(view.slice(0, 4)).map(b => b.toString(16).toUpperCase().padStart(2, '0')).join(' ');
+            for (const [sig, type] of Object.entries(signatures)) {
+                if (fileSignature.startsWith(sig)) {
+                    details.push({ title: 'Disguised Executable', description: `File has the signature of a ${type} but a non-standard extension.` });
+                    threat_level = 'High';
                 }
-                return { fileAnalysis: { file_type: `${extension.toUpperCase()} Script`, threat_level, summary } };
             }
-            const entropy = this._calculateEntropy(new Uint8Array(arrayBuffer));
-            let summary = `Universal analysis complete. File entropy is ${entropy.toFixed(2)}/8.0.`;
-            let threat_level = "Low";
+            
+            const entropy = this._calculateEntropy(view);
             if (entropy > 7.5) {
-                summary += " High entropy suggests the file may be packed or encrypted.";
-                threat_level = "High";
+                details.push({ title: 'High Entropy', description: `Score of ${entropy.toFixed(2)}/8.0 suggests file is packed or encrypted.` });
+                threat_level = threat_level === 'High' ? 'Critical' : 'High';
             }
-            return { fileAnalysis: { file_type: 'Binary/Unknown', threat_level, summary } };
+
+            if (content.includes("Invoke-Expression")) {
+                details.push({ title: 'PowerShell Risk', description: 'Contains `Invoke-Expression`, which allows arbitrary code execution.' });
+                threat_level = 'High';
+            }
+            if (content.includes("rm -rf")) {
+                details.push({ title: 'Destructive Command', description: 'Contains `rm -rf`, which can delete files recursively.' });
+                threat_level = 'Critical';
+            }
+
+            let summary = details.length > 0 ? 'Potential threats detected. Review details below.' : 'No significant threats found based on current rules.';
+            return { fileAnalysis: { file_type: 'Universal Analysis', threat_level, summary, details } };
         }
         
         _calculateEntropy(data) {
@@ -289,6 +258,7 @@ document.addEventListener('DOMContentLoaded', () => {
             for (let i = 0; i < data.length; i++) { byteCounts[data[i]]++; }
             let entropy = 0;
             const len = data.length;
+            if (len === 0) return 0;
             for (let i = 0; i < 256; i++) {
                 if (byteCounts[i] === 0) continue;
                 const p = byteCounts[i] / len;
