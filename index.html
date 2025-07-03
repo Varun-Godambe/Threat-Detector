@@ -57,7 +57,7 @@
         <section class="text-center py-12 md:py-20">
             <h1 class="text-4xl md:text-5xl lg:text-6xl font-bold tracking-tighter">Analyze Scripts and Logs for Threats.</h1>
             <p class="mx-auto mt-4 max-w-[700px] text-muted-foreground md:text-xl">
-                ThreatSight is a privacy-first, AI-powered tool for developers and security enthusiasts to uncover hidden risks in their code and logs. Instantly. In your browser.
+                A privacy-first tool with a client-side analysis agent to uncover hidden risks in their code and logs. Instantly. In your browser.
             </p>
             <a href="#analyzer" class="mt-8 inline-flex items-center justify-center rounded-md text-sm font-medium h-10 px-8 bg-primary text-primary-foreground shadow hover:bg-primary/90">
                 Start Analyzing
@@ -69,17 +69,17 @@
             <div class="bg-card border border-custom rounded-xl shadow-lg p-4 sm:p-6 md:p-8">
                 <!-- Tabs -->
                 <div class="border-b border-custom mb-6">
-                    <nav class="-mb-px flex space-x-6" aria-label="Tabs">
-                        <button data-tab="file" class="tab-btn group inline-flex items-center py-4 px-1 border-b-2 font-medium text-sm border-primary text-primary">
+                    <nav class="-mb-px flex space-x-6 overflow-x-auto" aria-label="Tabs">
+                        <button data-tab="file" class="tab-btn group inline-flex items-center py-4 px-1 border-b-2 font-medium text-sm border-primary text-primary whitespace-nowrap">
                             <span class="icon-file h-5 w-5 mr-2"></span> File Analysis
                         </button>
-                        <button data-tab="log" class="tab-btn group inline-flex items-center py-4 px-1 border-b-2 font-medium text-sm border-transparent text-muted-foreground hover:text-foreground hover:border-border-custom">
+                        <button data-tab="log" class="tab-btn group inline-flex items-center py-4 px-1 border-b-2 font-medium text-sm border-transparent text-muted-foreground hover:text-foreground hover:border-border-custom whitespace-nowrap">
                             <span class="icon-file-text h-5 w-5 mr-2"></span> Log Analysis
                         </button>
-                        <button data-tab="url" class="tab-btn group inline-flex items-center py-4 px-1 border-b-2 font-medium text-sm border-transparent text-muted-foreground hover:text-foreground hover:border-border-custom">
+                        <button data-tab="url" class="tab-btn group inline-flex items-center py-4 px-1 border-b-2 font-medium text-sm border-transparent text-muted-foreground hover:text-foreground hover:border-border-custom whitespace-nowrap">
                             <span class="icon-link h-5 w-5 mr-2"></span> URL Scan
                         </button>
-                        <button data-tab="snippet" class="tab-btn group inline-flex items-center py-4 px-1 border-b-2 font-medium text-sm border-transparent text-muted-foreground hover:text-foreground hover:border-border-custom">
+                        <button data-tab="snippet" class="tab-btn group inline-flex items-center py-4 px-1 border-b-2 font-medium text-sm border-transparent text-muted-foreground hover:text-foreground hover:border-border-custom whitespace-nowrap">
                             <span class="icon-code h-5 w-5 mr-2"></span> Snippet
                         </button>
                     </nav>
@@ -94,7 +94,20 @@
                     </div>
                     <!-- Log Panel -->
                     <div id="log-panel" class="tab-panel hidden">
-                         <p class="text-muted-foreground mb-4">Paste raw log data below to detect anomalies and suspicious patterns.</p>
+                        <div id="log-drop-area" class="border-2 border-dashed border-custom rounded-lg p-8 text-center cursor-pointer hover:border-primary hover:bg-primary/5 transition-colors">
+                            <div class="flex flex-col items-center justify-center space-y-2 text-muted-foreground">
+                                <span class="icon-upload-cloud h-10 w-10"></span>
+                                <p class="font-semibold">Drag & drop a log file here, or click to select</p>
+                                <p class="text-xs">.log, .txt files supported</p>
+                            </div>
+                            <input type="file" id="log-file-input" class="hidden" accept=".log,.txt">
+                        </div>
+                        <div class="flex items-center my-4">
+                            <hr class="flex-grow border-t border-custom">
+                            <span class="mx-4 text-sm text-muted-foreground">OR</span>
+                            <hr class="flex-grow border-t border-custom">
+                        </div>
+                        <p class="text-muted-foreground mb-2">Paste raw log data below:</p>
                         <textarea id="log-input" rows="8" class="w-full p-2 border border-custom rounded-md bg-background focus:ring-2 focus:ring-ring" placeholder="Paste log content here..."></textarea>
                     </div>
                     <!-- URL Panel -->
