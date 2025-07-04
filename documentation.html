@@ -10,77 +10,82 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="style.css">
     <style>
-        /* Additional styles for prose content */
-        .prose { color: #334155; }
-        .prose h2 { font-size: 1.5rem; font-weight: 600; margin-bottom: 1rem; color: #1e293b; }
-        .prose h3 { font-size: 1.25rem; font-weight: 600; margin-top: 1.5rem; margin-bottom: 0.5rem; color: #1e293b; }
+        /* Additional styles for prose content to match the new themes */
+        .prose { color: #374151; }
+        .prose h2 { font-size: 1.5rem; font-weight: 600; margin-bottom: 1rem; color: #111827; }
+        .prose h3 { font-size: 1.25rem; font-weight: 600; margin-top: 1.5rem; margin-bottom: 0.5rem; color: #111827; }
         .prose p, .prose ul, .prose li { line-height: 1.6; }
         .prose ul { list-style-type: disc; padding-left: 1.5rem; }
-        .prose code { background-color: #f1f5f9; color: #475569; padding: 0.2rem 0.4rem; font-size: 0.9em; border-radius: 0.25rem; }
-        .dark .prose { color: #d1d5db; }
-        .dark .prose h2, .dark .prose h3 { color: #f9fafb; }
-        .dark .prose code { background-color: #1f2937; color: #d1d5db; }
+        .prose code { background-color: #f3f4f6; color: #4b5563; padding: 0.2rem 0.4rem; font-size: 0.9em; border-radius: 0.25rem; }
+        .dark .prose { color: rgb(var(--muted-foreground)); }
+        .dark .prose h2, .dark .prose h3 { color: rgb(var(--foreground)); }
+        .dark .prose code { background-color: rgb(var(--background)); color: rgb(var(--foreground)); border: 1px solid rgb(var(--border));}
     </style>
 </head>
-<body class="min-h-screen bg-slate-50 dark:bg-gray-900">
+<body class="bg-background text-foreground transition-colors duration-300">
 
     <div class="grid min-h-screen w-full md:grid-cols-[220px_1fr] lg:grid-cols-[280px_1fr]">
         <!-- Sidebar -->
-        <div class="hidden border-r bg-white dark:bg-gray-950/40 md:block">
+        <div class="hidden border-r border-border bg-card md:block">
             <div class="flex h-full max-h-screen flex-col gap-2">
-                <div class="flex h-14 items-center border-b px-4 lg:h-[60px] lg:px-6">
-                    <a href="index.html" class="flex items-center gap-2 font-semibold text-gray-900 dark:text-gray-50">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="h-6 w-6 text-blue-600"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path></svg>
+                <div class="flex h-14 items-center border-b border-border px-4 lg:h-[60px] lg:px-6">
+                    <a href="index.html" class="flex items-center gap-2 font-semibold text-foreground">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="h-6 w-6 text-primary"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path></svg>
                         <span class="text-lg">ThreatSight</span>
                     </a>
                 </div>
                 <div class="flex-1">
                     <nav class="grid items-start px-2 text-sm font-medium lg:px-4">
-                        <a href="index.html" class="flex items-center gap-3 rounded-lg px-3 py-2 text-gray-500 dark:text-gray-400 transition-all hover:text-gray-900 dark:hover:text-gray-50">
+                        <a href="index.html" class="flex items-center gap-3 rounded-lg px-3 py-2 text-muted-foreground transition-all hover:text-foreground">
                             <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="h-4 w-4"><path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z"></path></svg>
                             Analyzer
                         </a>
-                        <a href="#" class="flex items-center gap-3 rounded-lg px-3 py-2 bg-gray-100 dark:bg-gray-800 text-gray-900 dark:text-gray-50 transition-all">
+                        <a href="#" class="flex items-center gap-3 rounded-lg px-3 py-2 bg-muted text-foreground transition-all">
                             <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="h-4 w-4"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"></path><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"></path></svg>
                             Documentation
                         </a>
                     </nav>
+                </div>
+                 <div class="mt-auto p-4">
+                    <div class="w-full justify-center flex items-center gap-2 text-sm text-green-600 dark:text-green-400">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="h-4 w-4"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path><path d="m9 12 2 2 4-4"></path></svg>
+                        <span>API Key Active</span>
+                    </div>
                 </div>
             </div>
         </div>
 
         <!-- Main Content -->
         <div class="flex flex-col">
-            <header class="flex h-14 items-center gap-4 border-b bg-white dark:bg-gray-950/40 px-4 lg:h-[60px] lg:px-6">
-                 <h1 class="text-lg font-semibold md:text-2xl text-gray-900 dark:text-gray-50">Documentation</h1>
+            <header class="flex h-14 items-center gap-4 border-b border-border bg-card px-4 lg:h-[60px] lg:px-6">
+                 <h1 class="text-lg font-semibold md:text-2xl text-foreground">Documentation</h1>
             </header>
 
             <main class="flex-1 p-4 lg:p-6 prose max-w-none">
-                <h2>AI-Powered Analysis Capabilities</h2>
-                <p>ThreatSight deploys a suite of specialized AI agents to perform deep analysis on files and URLs, providing comprehensive security insights for both everyday users and cybersecurity professionals.</p>
+                <h2>Real-Time Analysis Engine</h2>
+                <p>ThreatSight employs a powerful, hybrid analysis engine to provide state-of-the-art security insights. It intelligently routes submissions to the best-suited analysis backend, ensuring comprehensive and accurate results for every type of query.</p>
                 
-                <h3>URL Analysis</h3>
-                <p>Designed for simplicity and clarity, this feature allows anyone to check if a link is safe before clicking. The URL Analysis Agent provides:</p>
+                <h3>URL Analysis (Powered by VirusTotal)</h3>
+                <p>Designed for simplicity and clarity, this feature allows anyone to check if a link is safe before clicking. When a URL is submitted, it is sent to the VirusTotal API for scanning.</p>
                 <ul>
-                    <li><strong>Clear Verdict:</strong> A simple, color-coded result (Safe, Suspicious, or Malicious) that is easy to understand at a glance.</li>
-                    <li><strong>Plain-Language Summary:</strong> A brief explanation of why the URL received its verdict, avoiding technical jargon.</li>
-                    <li><strong>Technical Reasons:</strong> For those interested, a list of specific reasons for the verdict, such as blacklist status, domain reputation, or certificate validity.</li>
+                    <li><strong>Multi-Vendor Scanning:</strong> The URL is analyzed by over 70 different antivirus scanners and URL blacklisting services.</li>
+                    <li><strong>Clear Verdict:</strong> A simple, color-coded result (Safe, Suspicious, or Malicious) is provided for an immediate, easy-to-understand assessment.</li>
+                    <li><strong>Detailed Report:</strong> Users can view the specific results from each security vendor for a complete picture of the URL's reputation.</li>
                 </ul>
 
-                <h3>File Analysis: For All Users</h3>
-                <p>When any file is uploaded, the Static Analysis Agent performs a universal scan to identify potential threats, providing a clear summary suitable for all users.</p>
-                <ul>
-                    <li><strong>Threat Level Assessment:</strong> The file is assigned a threat level from "Safe" to "Critical" based on the findings.</li>
-                    <li><strong>AI Agent Summary:</strong> A clear, plain-language explanation of what was found.</li>
-                    <li><strong>Technical Detections:</strong> A list of specific findings, such as disguised file signatures (e.g., a <code>.txt</code> file with an executable header), high entropy suggesting packed/encrypted code, and dangerous embedded commands. Simulated CVEs are included for context.</li>
+                <h3>File Analysis: Malware & Executables (Powered by VirusTotal)</h3>
+                <p>For any file that is not a plain text log (e.g., <code>.exe</code>, <code>.dll</code>, <code>.pdf</code>, <code>.docx</code>, scripts), ThreatSight leverages the VirusTotal API for deep malware analysis.</p>
+                 <ul>
+                    <li><strong>Comprehensive Malware Scanning:</strong> The file is uploaded and scanned by the full suite of VirusTotal's security engines to detect known malware, trojans, and other threats.</li>
+                    <li><strong>Actionable Verdict:</strong> The results clearly indicate if the file is malicious, allowing users to take immediate action, such as deleting the file.</li>
                 </ul>
-                
-                <h3>File Analysis: For Professionals (Log Files)</h3>
-                <p>When a log file (<code>.log</code>, <code>.txt</code>) is uploaded, the Logfile Forensics Agent takes over to provide a professional-grade incident report.</p>
+
+                <h3>File Analysis: Log Files (Powered by Generative AI)</h3>
+                <p>When a log file (<code>.log</code>, <code>.txt</code>) is uploaded, ThreatSight deploys a specialized **AI Log Forensics Agent**. This agent reads the content of the file and performs a contextual analysis to identify security issues.</p>
                 <ul>
-                    <li><strong>Generated Vulnerability Report:</strong> A pre-formatted, copy-and-paste ready report section detailing the incident, key findings mapped to the MITRE ATT&CK framework, and actionable recommendations.</li>
-                    <li><strong>Threat Intelligence Correlation:</strong> A table of all IP addresses found in the log, checked against a simulated threat database to flag known malicious actors.</li>
-                    <li><strong>Reconstructed Attack Chain:</strong> A step-by-step visualization of the attack, from initial access to data exfiltration, making the incident easy to follow and document.</li>
+                    <li><strong>Context-Aware Analysis:</strong> The AI is prompted to act as a senior cybersecurity analyst, looking for patterns like repeated failed logins, unauthorized access attempts, SQL injection patterns, and other anomalies that simple scanners might miss.</li>
+                    <li><strong>Professional Report Generation:</strong> If credible issues are found, the AI generates a professional vulnerability report snippet. This includes a summary, a list of technical findings (with potential CVE mappings), and actionable recommendations.</li>
+                    <li><strong>No False Positives:</strong> A key feature of the AI agent is its instruction to report clearly if no issues are found. If a log is clean, the result will state "No security issues found," ensuring users are not chasing non-existent problems.</li>
                 </ul>
             </main>
         </div>
