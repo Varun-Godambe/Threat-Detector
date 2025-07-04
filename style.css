@@ -1,55 +1,76 @@
-/* Using Tailwind CSS via CDN, this file is for custom styles and variables */
 
-/* Defining CSS variables for light and dark themes. 
-  This makes the color scheme consistent and easy to manage.
-  Tailwind's 'dark:' utility class will toggle the .dark scope.
-*/
 :root {
     --font-sans: 'Inter', sans-serif;
     
-    /* Light Theme Colors */
+    /* Light Theme (Corporate/Clean) */
     --background: 248 250 252; /* slate-50 */
     --foreground: 15 23 42;    /* slate-900 */
     --card: 255 255 255;       /* white */
-    --card-foreground: 15 23 42;
-    --primary: 37 99 235;      /* blue-600 */
-    --primary-foreground: 248 250 252;
+    --border: 226 232 240;      /* slate-200 */
     --muted: 241 245 249;      /* slate-100 */
     --muted-foreground: 100 116 139; /* slate-500 */
-    --accent: 241 245 249;
-    --accent-foreground: 15 23 42;
-    --destructive: 239 68 68;  /* red-500 */
-    --border: 226 232 240;      /* slate-200 */
+    
+    --primary: 37 99 235;      /* blue-600 */
+    --primary-foreground: 248 250 252; /* slate-50 */
+    
+    --ring: 96 165 250; /* blue-400 */
 }
 
 .dark {
-    /* Dark Theme Colors */
-    --background: 2 6 23;        /* gray-950 */
-    --foreground: 226 232 240;   /* slate-200 */
-    --card: 30 41 59;           /* slate-800 */
-    --card-foreground: 226 232 240;
-    --primary: 96 165 250;       /* blue-400 */
-    --primary-foreground: 15 23 42;
-    --muted: 30 41 59;
-    --muted-foreground: 148 163 184; /* slate-400 */
-    --accent: 30 41 59;
-    --accent-foreground: 226 232 240;
-    --destructive: 220 38 38;   /* red-600 */
-    --border: 48 59 79;         /* slate-800 */
+    /* Dark Theme (Cyber/Hacker) */
+    --background: 17 24 39;    /* gray-900 */
+    --foreground: 229 231 235;   /* gray-200 */
+    --card: 31 41 55;           /* gray-800 */
+    --border: 55 65 81;         /* gray-700 */
+    --muted: 55 65 81;          /* gray-700 */
+    --muted-foreground: 156 163 175; /* gray-400 */
+    
+    --primary: 20 184 166;      /* teal-500 */
+    --primary-foreground: 240 253 250; /* teal-50 */
+
+    --ring: 45 212 191; /* teal-400 */
 }
 
-/* Base body styles */
+/* Base body styles using CSS variables for theming */
 body {
     font-family: var(--font-sans);
     background-color: rgb(var(--background));
     color: rgb(var(--foreground));
 }
 
-/* Custom class for the file drop zone highlight effect */
-.highlight {
-    border-color: rgb(var(--primary));
-    background-color: rgba(var(--primary), 0.1);
+/* Helper classes to apply theme colors to elements */
+.bg-background { background-color: rgb(var(--background)); }
+.bg-card { background-color: rgb(var(--card)); }
+.bg-muted { background-color: rgb(var(--muted)); }
+.text-foreground { color: rgb(var(--foreground)); }
+.text-muted-foreground { color: rgb(var(--muted-foreground)); }
+.text-primary { color: rgb(var(--primary)); }
+.text-primary-foreground { color: rgb(var(--primary-foreground)); }
+.border-border { border-color: rgb(var(--border)); }
+
+/* Themed button styles */
+.main-button {
+    background-color: rgb(var(--primary));
 }
+.main-button:hover {
+    filter: brightness(1.1);
+}
+.main-button:focus {
+    outline: 2px solid transparent;
+    outline-offset: 2px;
+    box-shadow: 0 0 0 4px rgba(var(--ring), 0.5);
+}
+
+/* Themed input focus ring */
+input:focus {
+    border-color: rgb(var(--primary)) !important;
+    box-shadow: 0 0 0 1px rgb(var(--primary)) !important;
+}
+
+/* Custom class for the file drop zone highlight effect */
+.hover\:border-primary:hover { border-color: rgb(var(--primary)); }
+.hover\:bg-primary\/10:hover { background-color: rgba(var(--primary), 0.1); }
+
 
 /* Custom loader animation */
 .loader {
@@ -72,30 +93,8 @@ body {
 }
 
 @keyframes fadeIn {
-    from {
-        opacity: 0;
-        transform: translateY(20px);
-    }
-    to {
-        opacity: 1;
-        transform: translateY(0);
-    }
-}
-
-/* Styles for the attack chain visualization */
-.attack-chain-item::before {
-    content: '';
-    position: absolute;
-    left: 11px; /* Center the line on the 24px icon */
-    top: 24px;
-    bottom: 0;
-    width: 2px;
-    background-color: rgb(var(--border));
-}
-
-/* Remove the line from the last item in the chain */
-.attack-chain-item:last-child::before {
-    display: none;
+    from { opacity: 0; transform: translateY(20px); }
+    to { opacity: 1; transform: translateY(0); }
 }
 
 /* Tab styling */
@@ -106,17 +105,9 @@ body {
 
 .tab-btn.inactive-tab {
     border-color: transparent;
-    color: #6b7280; /* gray-500 */
-}
-.dark .tab-btn.inactive-tab {
-    color: #9ca3af; /* gray-400 */
+    color: rgb(var(--muted-foreground));
 }
 
 .tab-btn:hover {
-    border-color: #d1d5db; /* gray-300 */
-    color: #4b5563; /* gray-600 */
-}
-.dark .tab-btn:hover {
-    border-color: #4b5563; /* gray-600 */
-    color: #d1d5db; /* gray-300 */
+    color: rgb(var(--foreground));
 }
