@@ -1,3 +1,10 @@
+/* This CSS file defines two distinct visual themes for the ThreatSight application:
+  1. Light Theme: A clean, professional, high-contrast "corporate" look with blue accents.
+  2. Dark Theme: A "hacker"-style theme with a dark charcoal background and vibrant teal accents.
+
+  The themes are controlled by CSS variables, making it easy to manage and customize the color palettes.
+  The `dark` class on the <html> element, toggled by JavaScript, activates the dark theme variables.
+*/
 
 :root {
     --font-sans: 'Inter', sans-serif;
