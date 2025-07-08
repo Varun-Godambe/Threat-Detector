@@ -35,8 +35,6 @@ document.addEventListener('DOMContentLoaded', () => {
     let currentFile = null;
     
     // --- API KEYS & ENDPOINTS ---
-    // Keys are embedded for GitHub Pages deployment.
-    // They have been secured with website and API restrictions.
     const VT_API_KEY = 'ade67983327c2d7b57f5fa9d097056b1b72915427156f0eb37922ab79b159a0b';
     const GEMINI_API_KEY = 'AIzaSyASISr1va_plNsir5hhuhBDZdwBDOX-0sw';
 
@@ -134,7 +132,6 @@ document.addEventListener('DOMContentLoaded', () => {
                 if (!currentFile) { throw new Error("Please select a file first."); }
                 analyzeFileBtn.disabled = true;
                 
-                // List of extensions to be analyzed by the AI as text
                 const textBasedExtensions = [
                     '.log', '.txt', '.conf', '.cfg', '.config', '.ini', 
                     '.json', '.yaml', '.yml', '.xml', '.sh', '.ps1', 
@@ -148,8 +145,8 @@ document.addEventListener('DOMContentLoaded', () => {
                         throw new Error("Gemini API key is not set. Log/Config analysis is disabled.");
                     }
                     loaderText.textContent = 'Deploying AI Forensics Agent...';
-                    const reportText = await runAiLogAnalysis(currentFile);
-                    displayAiLogReport(reportText);
+                    const reportData = await runAiLogAnalysis(currentFile);
+                    displayAiLogReport(reportData);
                 } else {
                     loaderText.textContent = 'Uploading file to VirusTotal Analysis Grid...';
                     const analysisId = await uploadToVirusTotal(currentFile, 'file');
@@ -192,13 +189,17 @@ document.addEventListener('DOMContentLoaded', () => {
     async function runAiLogAnalysis(file) {
         const fileContent = await file.text();
         const prompt = `
-            You are a senior cybersecurity analyst. Your task is to analyze the following log data or configuration file for security issues, anomalies, or potential vulnerabilities.
+            You are a senior cybersecurity analyst. Your task is to analyze the following log data or configuration file and return your findings in a structured JSON format.
 
             **Instructions:**
-            1.  Thoroughly review the provided text content.
-            2.  Identify any suspicious activities, errors, misconfigurations, exposed secrets, or patterns that could indicate a security threat (e.g., failed logins, unauthorized access attempts, hardcoded passwords, overly permissive rules, SQL injection patterns, etc.).
-            3.  If you find credible issues, format your findings as a professional vulnerability report snippet. Include a title, a summary of the findings, a list of specific issues with technical details, and potential CVE numbers if an issue maps to a known vulnerability type.
-            4.  **Crucially, if the file appears clean and contains no discernible security issues, you MUST respond with only the exact phrase: "No security issues found."** Do not invent problems.
+            1.  Thoroughly review the provided text content for security issues, anomalies, or potential vulnerabilities. Look for things like repeated failed logins, unauthorized access attempts, hardcoded secrets, overly permissive rules, SQL injection patterns, repelled attacks, or other notable events.
+            2.  Structure your response as a single JSON object. Do not include any text or markdown formatting before or after the JSON object.
+            3.  The JSON object must have a key "analysisResult".
+            4.  If the file is completely benign and contains no security issues OR notable events whatsoever, the value of "analysisResult" should be the string "No security issues or notable events found.".
+            5.  If you find issues or notable events, the value of "analysisResult" should be an object with three keys: "summary", "findings", and "vulnerabilityReport".
+                - "summary": A concise, one-paragraph executive summary of the overall security posture, including both active issues and notable informational events.
+                - "findings": An array of objects. Each object represents a single issue or event and must have the keys: "title" (string), "severity" (string: "Critical", "High", "Medium", "Low", or "Informational"), and "details" (string, a detailed explanation of the finding).
+                - "vulnerabilityReport": A string containing a clean, pre-formatted vulnerability report snippet suitable for copying into a professional document. This snippet should focus on actionable vulnerabilities and misconfigurations. If there are only informational findings, this can be a brief summary.
 
             **File Content to Analyze:**
             \`\`\`
@@ -206,7 +207,12 @@ document.addEventListener('DOMContentLoaded', () => {
             \`\`\`
         `;
 
-        const payload = { contents: [{ role: "user", parts: [{ text: prompt }] }] };
+        const payload = {
+            contents: [{ role: "user", parts: [{ text: prompt }] }],
+            generationConfig: {
+                responseMimeType: "application/json",
+            }
+        };
 
         const response = await fetch(GEMINI_API_URL, {
             method: 'POST',
@@ -220,7 +226,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
         const result = await response.json();
         if (result.candidates && result.candidates.length > 0) {
-            return result.candidates[0].content.parts[0].text;
+            // The response from the API is a JSON string, so we need to parse it.
+            const jsonString = result.candidates[0].content.parts[0].text;
+            return JSON.parse(jsonString);
         } else {
             if (result.promptFeedback && result.promptFeedback.blockReason) {
                  throw new Error(`AI analysis blocked. Reason: ${result.promptFeedback.blockReason}`);
@@ -274,42 +282,82 @@ document.addEventListener('DOMContentLoaded', () => {
     // =================================================================================
     // --- DYNAMIC UI RENDERING ---
     // =================================================================================
-    function displayAiLogReport(reportText) {
+    function displayAiLogReport(reportData) {
         resultsContainer.innerHTML = '';
-        const card = document.createElement('div');
-        card.className = 'p-6 rounded-lg bg-card border border-border shadow-md';
         
-        if (reportText.trim() === "No security issues found.") {
+        if (reportData.analysisResult === "No security issues or notable events found.") {
+            const card = document.createElement('div');
+            card.className = 'p-6 rounded-lg bg-card border border-border shadow-md';
             card.innerHTML = `
                 <div class="text-center">
                     <div class="flex justify-center text-green-500">
                         <svg xmlns="http://www.w3.org/2000/svg" class="h-16 w-16" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
                     </div>
                     <h3 class="mt-4 text-2xl font-bold text-foreground">Analysis Complete</h3>
-                    <p class="mt-4 text-muted-foreground">The AI Forensics Agent analyzed the file and found no discernible security issues or anomalies.</p>
+                    <p class="mt-4 text-muted-foreground">The AI Forensics Agent analyzed the file and found no security issues or notable events.</p>
                 </div>
             `;
+            resultsContainer.appendChild(card);
         } else {
-            const title = document.createElement('h3');
-            title.className = 'text-xl font-semibold mb-4 text-foreground';
-            title.textContent = 'AI Security Analysis Report';
+            const { summary, findings, vulnerabilityReport } = reportData.analysisResult;
             
+            // 1. Summary Card
+            const summaryCard = document.createElement('div');
+            summaryCard.className = 'p-6 rounded-lg bg-card border border-border shadow-md mb-6';
+            summaryCard.innerHTML = `<h3 class="text-xl font-semibold mb-2 text-foreground">Executive Summary</h3><p class="text-muted-foreground">${summary}</p>`;
+            resultsContainer.appendChild(summaryCard);
+
+            // 2. Threat Dashboard
+            const dashboardContainer = document.createElement('div');
+            dashboardContainer.className = 'p-6 rounded-lg bg-card border border-border shadow-md mb-6';
+            dashboardContainer.innerHTML = `<h3 class="text-xl font-semibold mb-4 text-foreground">Threat Dashboard</h3>`;
+            const findingsGrid = document.createElement('div');
+            findingsGrid.className = 'space-y-4';
+            findings.forEach(finding => {
+                findingsGrid.appendChild(createFindingCard(finding));
+            });
+            dashboardContainer.appendChild(findingsGrid);
+            resultsContainer.appendChild(dashboardContainer);
+
+            // 3. Vulnerability Report Snippet
+            const reportCard = document.createElement('div');
+            reportCard.className = 'p-6 rounded-lg bg-card border border-border shadow-md';
+            reportCard.innerHTML = `<h3 class="text-xl font-semibold mb-4 text-foreground">Vulnerability Report Snippet</h3>`;
             const pre = document.createElement('pre');
             pre.className = 'whitespace-pre-wrap p-4 rounded-md bg-muted text-sm text-foreground font-mono';
-            pre.textContent = reportText;
-            
+            pre.textContent = vulnerabilityReport;
             const copyButton = document.createElement('button');
             copyButton.textContent = 'Copy Report';
             copyButton.className = 'main-button mt-4 px-4 py-2 text-sm font-medium text-primary-foreground rounded-md';
             copyButton.onclick = () => {
-                navigator.clipboard.writeText(reportText).then(() => {
+                navigator.clipboard.writeText(vulnerabilityReport).then(() => {
                     copyButton.textContent = 'Copied!';
                     setTimeout(() => copyButton.textContent = 'Copy Report', 2000);
                 });
             };
-            card.append(title, pre, copyButton);
+            reportCard.append(pre, copyButton);
+            resultsContainer.appendChild(reportCard);
         }
-        resultsContainer.appendChild(card);
+    }
+
+    function createFindingCard({ title, severity, details }) {
+        const severityColors = {
+            "Critical": "bg-red-600 text-white",
+            "High": "bg-red-500 text-white",
+            "Medium": "bg-yellow-500 text-black",
+            "Low": "bg-blue-500 text-white",
+            "Informational": "bg-gray-500 text-white"
+        };
+        const card = document.createElement('div');
+        card.className = 'p-4 rounded-lg border border-border';
+        card.innerHTML = `
+            <div class="flex justify-between items-start">
+                <h4 class="font-semibold text-foreground">${title}</h4>
+                <span class="text-xs font-bold uppercase px-2 py-1 rounded-full ${severityColors[severity] || 'bg-gray-400'}">${severity}</span>
+            </div>
+            <p class="mt-2 text-sm text-muted-foreground">${details}</p>
+        `;
+        return card;
     }
 
     function displayVirusTotalFileReport(report) {
