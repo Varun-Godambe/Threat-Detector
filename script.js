@@ -4,6 +4,12 @@ document.addEventListener('DOMContentLoaded', () => {
     const sunIcon = document.getElementById('theme-icon-sun');
     const moonIcon = document.getElementById('theme-icon-moon');
     
+    // Sidebar & Mobile Nav
+    const sidebar = document.getElementById('sidebar');
+    const sidebarOverlay = document.getElementById('sidebar-overlay');
+    const openSidebarBtn = document.getElementById('open-sidebar-btn');
+    const closeSidebarBtn = document.getElementById('close-sidebar-btn');
+
     // Tabs
     const tabFile = document.getElementById('tab-file');
     const tabUrl = document.getElementById('tab-url');
@@ -29,12 +35,14 @@ document.addEventListener('DOMContentLoaded', () => {
     let currentFile = null;
     
     // --- API KEYS & ENDPOINTS ---
-    // VirusTotal API Key is hardcoded as requested.
+    // Keys are embedded for GitHub Pages deployment.
+    // They have been secured with website and API restrictions.
     const VT_API_KEY = 'ade67983327c2d7b57f5fa9d097056b1b72915427156f0eb37922ab79b159a0b';
+    const GEMINI_API_KEY = 'AIzaSyASISr1va_plNsir5hhuhBDZdwBDOX-0sw';
+
     const VT_BASE_URL = 'https://www.virustotal.com/api/v3';
-    // The Gemini API key is left blank; it will be handled by the execution environment.
-    const GEMINI_API_KEY = ''; 
     const GEMINI_API_URL = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${GEMINI_API_KEY}`;
+
 
     // =================================================================================
     // --- INITIALIZATION ---
@@ -43,6 +51,10 @@ document.addEventListener('DOMContentLoaded', () => {
         const savedTheme = localStorage.getItem('theme') || (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
         applyTheme(savedTheme);
         themeToggle.addEventListener('click', toggleTheme);
+
+        openSidebarBtn.addEventListener('click', openSidebar);
+        closeSidebarBtn.addEventListener('click', closeSidebar);
+        sidebarOverlay.addEventListener('click', closeSidebar);
 
         tabFile.addEventListener('click', () => switchTab('file'));
         tabUrl.addEventListener('click', () => switchTab('url'));
@@ -70,6 +82,19 @@ document.addEventListener('DOMContentLoaded', () => {
         const currentTheme = document.documentElement.classList.contains('dark') ? 'light' : 'dark';
         localStorage.setItem('theme', currentTheme);
         applyTheme(currentTheme);
+    }
+
+    // =================================================================================
+    // --- MOBILE NAVIGATION ---
+    // =================================================================================
+    function openSidebar() {
+        sidebar.classList.remove('-translate-x-full');
+        sidebarOverlay.classList.remove('hidden');
+    }
+
+    function closeSidebar() {
+        sidebar.classList.add('-translate-x-full');
+        sidebarOverlay.classList.add('hidden');
     }
 
     // =================================================================================
@@ -109,16 +134,27 @@ document.addEventListener('DOMContentLoaded', () => {
                 if (!currentFile) { throw new Error("Please select a file first."); }
                 analyzeFileBtn.disabled = true;
                 
-                // HYBRID ANALYSIS: Check file type to decide which API to use
-                if (currentFile.name.endsWith('.log') || currentFile.name.endsWith('.txt')) {
-                    loaderText.textContent = 'Deploying AI Log Forensics Agent...';
+                // List of extensions to be analyzed by the AI as text
+                const textBasedExtensions = [
+                    '.log', '.txt', '.conf', '.cfg', '.config', '.ini', 
+                    '.json', '.yaml', '.yml', '.xml', '.sh', '.ps1', 
+                    '.py', '.js', '.md'
+                ];
+
+                const isTextBased = textBasedExtensions.some(ext => currentFile.name.endsWith(ext));
+
+                if (isTextBased) {
+                    if (!GEMINI_API_KEY) {
+                        throw new Error("Gemini API key is not set. Log/Config analysis is disabled.");
+                    }
+                    loaderText.textContent = 'Deploying AI Forensics Agent...';
                     const reportText = await runAiLogAnalysis(currentFile);
                     displayAiLogReport(reportText);
                 } else {
                     loaderText.textContent = 'Uploading file to VirusTotal Analysis Grid...';
                     const analysisId = await uploadToVirusTotal(currentFile, 'file');
                     loaderText.textContent = 'Awaiting report from 70+ security vendors...';
-                    const report = await pollForVirusTotalReport(analysisId, 'file');
+                    const report = await pollForVirusTotalReport(analysisId);
                     displayVirusTotalFileReport(report);
                 }
 
@@ -129,12 +165,18 @@ document.addEventListener('DOMContentLoaded', () => {
                 loaderText.textContent = 'Submitting URL to VirusTotal Analysis Grid...';
                 const analysisId = await uploadToVirusTotal(urlToScan, 'url');
                 loaderText.textContent = 'Awaiting report from security vendors...';
-                const report = await pollForVirusTotalReport(analysisId, 'url');
+                const report = await pollForVirusTotalReport(analysisId);
                 displayVirusTotalUrlReport(report);
             }
         } catch (error) {
             console.error("Analysis failed:", error);
-            resultsContainer.innerHTML = `<div class="p-6 rounded-lg bg-red-100 dark:bg-red-900/50 border border-red-200 dark:border-red-800 text-center"><h3 class="font-semibold text-red-800 dark:text-red-200">Analysis Failed</h3><p class="mt-2 text-sm text-red-700 dark:text-red-300 font-mono">${error.message}</p></div>`;
+            let friendlyMessage = error.message;
+            if (error.message.includes('403')) {
+                friendlyMessage = "Access Denied (403). The provided API key may be invalid, expired, or lack permissions for this resource. Please verify your API key and permissions.";
+            } else if (error.message.includes('Failed to fetch')) {
+                 friendlyMessage = "Network error. Please check your internet connection and ensure ad-blockers are not interfering with API requests.";
+            }
+            resultsContainer.innerHTML = `<div class="p-6 rounded-lg bg-red-100 dark:bg-red-900/50 border border-red-200 dark:border-red-800 text-center"><h3 class="font-semibold text-red-800 dark:text-red-200">Analysis Failed</h3><p class="mt-2 text-sm text-red-700 dark:text-red-300">${friendlyMessage}</p></div>`;
         } finally {
             loader.style.display = 'none';
             resultsContainer.classList.remove('hidden');
@@ -145,31 +187,26 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     // =================================================================================
-    // --- REAL AI LOG ANALYSIS (GEMINI API) ---
+    // --- API INTERACTIONS (FRONTEND-ONLY) ---
     // =================================================================================
     async function runAiLogAnalysis(file) {
-        const logContent = await file.text();
+        const fileContent = await file.text();
         const prompt = `
-            You are a senior cybersecurity analyst. Your task is to analyze the following log data for security issues, anomalies, or potential vulnerabilities.
+            You are a senior cybersecurity analyst. Your task is to analyze the following log data or configuration file for security issues, anomalies, or potential vulnerabilities.
 
             **Instructions:**
-            1.  Thoroughly review the log data provided below.
-            2.  Identify any suspicious activities, errors, or patterns that could indicate a security threat (e.g., failed logins, unauthorized access attempts, strange user agent strings, SQL injection patterns, etc.).
+            1.  Thoroughly review the provided text content.
+            2.  Identify any suspicious activities, errors, misconfigurations, exposed secrets, or patterns that could indicate a security threat (e.g., failed logins, unauthorized access attempts, hardcoded passwords, overly permissive rules, SQL injection patterns, etc.).
             3.  If you find credible issues, format your findings as a professional vulnerability report snippet. Include a title, a summary of the findings, a list of specific issues with technical details, and potential CVE numbers if an issue maps to a known vulnerability type.
-            4.  **Crucially, if the log data appears clean and contains no discernible security issues, you MUST respond with only the exact phrase: "No security issues found."** Do not invent problems.
+            4.  **Crucially, if the file appears clean and contains no discernible security issues, you MUST respond with only the exact phrase: "No security issues found."** Do not invent problems.
 
-            **Log Data to Analyze:**
+            **File Content to Analyze:**
             \`\`\`
-            ${logContent}
+            ${fileContent}
             \`\`\`
         `;
 
-        const payload = {
-            contents: [{
-                role: "user",
-                parts: [{ text: prompt }]
-            }]
-        };
+        const payload = { contents: [{ role: "user", parts: [{ text: prompt }] }] };
 
         const response = await fetch(GEMINI_API_URL, {
             method: 'POST',
@@ -185,13 +222,13 @@ document.addEventListener('DOMContentLoaded', () => {
         if (result.candidates && result.candidates.length > 0) {
             return result.candidates[0].content.parts[0].text;
         } else {
+            if (result.promptFeedback && result.promptFeedback.blockReason) {
+                 throw new Error(`AI analysis blocked. Reason: ${result.promptFeedback.blockReason}`);
+            }
             throw new Error("AI analysis returned no valid response.");
         }
     }
 
-    // =================================================================================
-    // --- VIRUSTOTAL API INTERACTION ---
-    // =================================================================================
     async function uploadToVirusTotal(data, type) {
         let endpoint, options;
         if (type === 'file') {
@@ -223,7 +260,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     async function pollForVirusTotalReport(id) {
         let attempts = 0;
-        while (attempts < 20) { // Poll for up to 100 seconds
+        while (attempts < 20) {
             const report = await getVirusTotalAnalysisReport(id);
             if (report.attributes.status === 'completed') {
                 return report;
@@ -240,7 +277,7 @@ document.addEventListener('DOMContentLoaded', () => {
     function displayAiLogReport(reportText) {
         resultsContainer.innerHTML = '';
         const card = document.createElement('div');
-        card.className = 'p-6 rounded-lg bg-white dark:bg-slate-800 border border-gray-200 dark:border-gray-700 shadow-md';
+        card.className = 'p-6 rounded-lg bg-card border border-border shadow-md';
         
         if (reportText.trim() === "No security issues found.") {
             card.innerHTML = `
@@ -248,22 +285,22 @@ document.addEventListener('DOMContentLoaded', () => {
                     <div class="flex justify-center text-green-500">
                         <svg xmlns="http://www.w3.org/2000/svg" class="h-16 w-16" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
                     </div>
-                    <h3 class="mt-4 text-2xl font-bold text-gray-900 dark:text-gray-100">Analysis Complete</h3>
-                    <p class="mt-4 text-gray-600 dark:text-gray-300">The AI Log Forensics Agent analyzed the file and found no discernible security issues or anomalies.</p>
+                    <h3 class="mt-4 text-2xl font-bold text-foreground">Analysis Complete</h3>
+                    <p class="mt-4 text-muted-foreground">The AI Forensics Agent analyzed the file and found no discernible security issues or anomalies.</p>
                 </div>
             `;
         } else {
             const title = document.createElement('h3');
-            title.className = 'text-xl font-semibold mb-4 text-gray-900 dark:text-gray-100';
-            title.textContent = 'AI Log Analysis Report';
+            title.className = 'text-xl font-semibold mb-4 text-foreground';
+            title.textContent = 'AI Security Analysis Report';
             
             const pre = document.createElement('pre');
-            pre.className = 'whitespace-pre-wrap p-4 rounded-md bg-gray-100 dark:bg-gray-900 text-sm text-gray-700 dark:text-gray-300 font-mono';
+            pre.className = 'whitespace-pre-wrap p-4 rounded-md bg-muted text-sm text-foreground font-mono';
             pre.textContent = reportText;
             
             const copyButton = document.createElement('button');
             copyButton.textContent = 'Copy Report';
-            copyButton.className = 'mt-4 px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-md hover:bg-blue-700';
+            copyButton.className = 'main-button mt-4 px-4 py-2 text-sm font-medium text-primary-foreground rounded-md';
             copyButton.onclick = () => {
                 navigator.clipboard.writeText(reportText).then(() => {
                     copyButton.textContent = 'Copied!';
@@ -329,30 +366,30 @@ document.addEventListener('DOMContentLoaded', () => {
             green: `<svg xmlns="http://www.w3.org/2000/svg" class="h-16 w-16" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>`,
         };
         const card = document.createElement('div');
-        card.className = `p-6 rounded-lg bg-white dark:bg-slate-800 border border-gray-200 dark:border-gray-700 shadow-md text-center mb-6`;
+        card.className = `p-6 rounded-lg bg-card border border-border shadow-md text-center mb-6`;
         card.innerHTML = `
             <div class="flex justify-center text-${color}-500">${icons[color]}</div>
-            <h3 class="mt-4 text-2xl font-bold text-gray-900 dark:text-gray-100">${verdict}</h3>
-            <p class="mt-2 font-mono text-sm text-gray-500 dark:text-gray-400 break-all">${subject}</p>
-            <p class="mt-4 text-gray-600 dark:text-gray-300 max-w-2xl mx-auto">${summary}</p>
+            <h3 class="mt-4 text-2xl font-bold text-foreground">${verdict}</h3>
+            <p class="mt-2 font-mono text-sm text-muted-foreground break-all">${subject}</p>
+            <p class="mt-4 text-muted-foreground max-w-2xl mx-auto">${summary}</p>
         `;
         return card;
     }
 
     function createDetailsTable(results) {
         const card = document.createElement('div');
-        card.className = 'p-6 rounded-lg bg-white dark:bg-slate-800 border border-gray-200 dark:border-gray-700 shadow-md';
+        card.className = 'p-6 rounded-lg bg-card border border-border shadow-md';
         const title = document.createElement('h3');
-        title.className = 'text-xl font-semibold mb-4 text-gray-900 dark:text-gray-100';
+        title.className = 'text-xl font-semibold mb-4 text-foreground';
         title.textContent = 'Detailed Analysis Report from Security Vendors';
         
         const wrapper = document.createElement('div');
-        wrapper.className = 'overflow-x-auto rounded-lg border border-gray-200 dark:border-gray-700';
+        wrapper.className = 'overflow-x-auto rounded-lg border border-border';
         const table = document.createElement('table');
         table.className = 'w-full text-left text-sm';
         table.innerHTML = `
-            <thead class="bg-gray-50 dark:bg-slate-900/50">
-                <tr class="text-gray-500 dark:text-gray-400">
+            <thead class="bg-muted">
+                <tr class="text-muted-foreground">
                     <th class="p-4 font-medium">Security Vendor</th>
                     <th class="p-4 font-medium">Category</th>
                     <th class="p-4 font-medium">Result</th>
@@ -360,21 +397,21 @@ document.addEventListener('DOMContentLoaded', () => {
             </thead>
         `;
         const tbody = document.createElement('tbody');
-        tbody.className = 'divide-y divide-gray-200 dark:divide-gray-700';
+        tbody.className = 'divide-y divide-border';
         
         for (const engine in results) {
             const result = results[engine];
             const tr = document.createElement('tr');
             
             const category = result.category;
-            let colorClass = 'text-gray-500 dark:text-gray-400';
+            let colorClass = 'text-muted-foreground';
             if (category === 'malicious') colorClass = 'text-red-600 dark:text-red-400';
             if (category === 'suspicious') colorClass = 'text-yellow-600 dark:text-yellow-400';
 
             tr.innerHTML = `
-                <td class="p-4 font-semibold text-gray-800 dark:text-gray-200">${result.engine_name}</td>
+                <td class="p-4 font-semibold text-foreground">${result.engine_name}</td>
                 <td class="p-4 font-medium ${colorClass}">${category.charAt(0).toUpperCase() + category.slice(1)}</td>
-                <td class="p-4 font-mono text-xs text-gray-600 dark:text-gray-300">${result.result || 'Clean'}</td>
+                <td class="p-4 font-mono text-xs text-muted-foreground">${result.result || 'Clean'}</td>
             `;
             tbody.appendChild(tr);
         }
