@@ -25,7 +25,7 @@
 <body class="bg-background text-foreground transition-colors duration-300">
 
     <div class="grid min-h-screen w-full md:grid-cols-[220px_1fr] lg:grid-cols-[280px_1fr]">
-        <!-- Sidebar -->
+        <!-- Sidebar (Static for documentation, can be simplified if needed) -->
         <div class="hidden border-r border-border bg-card md:block">
             <div class="flex h-full max-h-screen flex-col gap-2">
                 <div class="flex h-14 items-center border-b border-border px-4 lg:h-[60px] lg:px-6">
@@ -74,18 +74,18 @@
                 </ul>
 
                 <h3>File Analysis: Malware & Executables (Powered by VirusTotal)</h3>
-                <p>For any file that is not a plain text log (e.g., <code>.exe</code>, <code>.dll</code>, <code>.pdf</code>, <code>.docx</code>, scripts), ThreatSight leverages the VirusTotal API for deep malware analysis.</p>
+                <p>For any file that is not a plain text log or configuration file (e.g., <code>.exe</code>, <code>.dll</code>, <code>.pdf</code>, <code>.docx</code>, <code>.zip</code>), ThreatSight leverages the VirusTotal API for deep malware analysis.</p>
                  <ul>
                     <li><strong>Comprehensive Malware Scanning:</strong> The file is uploaded and scanned by the full suite of VirusTotal's security engines to detect known malware, trojans, and other threats.</li>
                     <li><strong>Actionable Verdict:</strong> The results clearly indicate if the file is malicious, allowing users to take immediate action, such as deleting the file.</li>
                 </ul>
 
-                <h3>File Analysis: Log Files (Powered by Generative AI)</h3>
-                <p>When a log file (<code>.log</code>, <code>.txt</code>) is uploaded, ThreatSight deploys a specialized **AI Log Forensics Agent**. This agent reads the content of the file and performs a contextual analysis to identify security issues.</p>
+                <h3>File Analysis: Logs & Configurations (Powered by Gemini AI)</h3>
+                <p>When a text-based file is uploaded (e.g., <code>.log</code>, <code>.txt</code>, <code>.json</code>, <code>.xml</code>, <code>.conf</code>, <code>.py</code>, <code>.sh</code>), ThreatSight deploys a specialized **AI Forensics Agent**.</p>
                 <ul>
-                    <li><strong>Context-Aware Analysis:</strong> The AI is prompted to act as a senior cybersecurity analyst, looking for patterns like repeated failed logins, unauthorized access attempts, SQL injection patterns, and other anomalies that simple scanners might miss.</li>
+                    <li><strong>Context-Aware Analysis:</strong> The AI is prompted to act as a senior cybersecurity analyst, looking for patterns like repeated failed logins, unauthorized access attempts, hardcoded passwords, insecure settings, and other anomalies that simple scanners might miss.</li>
                     <li><strong>Professional Report Generation:</strong> If credible issues are found, the AI generates a professional vulnerability report snippet. This includes a summary, a list of technical findings (with potential CVE mappings), and actionable recommendations.</li>
-                    <li><strong>No False Positives:</strong> A key feature of the AI agent is its instruction to report clearly if no issues are found. If a log is clean, the result will state "No security issues found," ensuring users are not chasing non-existent problems.</li>
+                    <li><strong>No False Positives:</strong> A key feature of the AI agent is its instruction to report clearly if no issues are found. If a file is clean, the result will state "No security issues found," ensuring users are not chasing non-existent problems.</li>
                 </ul>
             </main>
         </div>
