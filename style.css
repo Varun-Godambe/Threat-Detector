@@ -79,31 +79,28 @@ body {
 
 
 /* --- Splash Screen --- */
-.tagline {
-    border-right: 2px solid rgba(var(--foreground), 0.75);
-    white-space: nowrap;
-    overflow: hidden;
-    width: 0;
-    animation: typing 2s steps(40, end) forwards, blink-caret .75s step-end infinite;
+.enter-prompt {
+    animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
 }
 
-@keyframes typing {
-    from { width: 0 }
-    to { width: 100% }
-}
-
-@keyframes blink-caret {
-    from, to { border-color: transparent }
-    50% { border-color: rgba(var(--foreground), 0.75); }
+@keyframes pulse {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: .5;
+  }
 }
 
 .fade-out {
     opacity: 0;
     pointer-events: none;
+    transition: opacity 0.5s ease-out;
 }
 
-.fade-in {
+#main-content.fade-in {
     opacity: 1;
+    transition: opacity 0.5s ease-in;
 }
 
 
