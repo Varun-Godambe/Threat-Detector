@@ -39,6 +39,20 @@ function handleFileSelect(files) {
     dom.analyzeFileBtn.disabled = false;
 }
 
+function enterApp() {
+    dom.splashScreen.classList.add('fade-out');
+    dom.mainContent.classList.remove('hidden');
+    // We need a small delay to allow the 'hidden' class to be removed before starting the fade-in
+    setTimeout(() => {
+        dom.mainContent.classList.add('fade-in');
+    }, 10);
+
+    // Remove the splash screen from the DOM after the transition is complete
+    dom.splashScreen.addEventListener('transitionend', () => {
+        dom.splashScreen.remove();
+    });
+}
+
 // --- Analysis Orchestration ---
 async function runAnalysis(type) {
     dom.analysisSection.classList.remove('hidden');
@@ -105,20 +119,11 @@ async function runAnalysis(type) {
 
 // --- Initialization ---
 function initialize() {
-    // Splash Screen Logic
-    setTimeout(() => {
-        dom.splashScreen.classList.add('fade-out');
-        dom.mainContent.classList.remove('hidden');
-        dom.mainContent.classList.add('fade-in');
-        
-        dom.splashScreen.addEventListener('transitionend', () => {
-            dom.splashScreen.remove();
-        });
-    }, 2500); // Adjust delay as needed
-
     const savedTheme = localStorage.getItem('theme') || (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
     ui.applyTheme(savedTheme);
     
+    dom.splashScreen.addEventListener('click', enterApp, { once: true });
+
     dom.themeToggle.addEventListener('click', ui.toggleTheme);
     dom.openSidebarBtn.addEventListener('click', ui.openSidebar);
     dom.closeSidebarBtn.addEventListener('click', ui.closeSidebar);
