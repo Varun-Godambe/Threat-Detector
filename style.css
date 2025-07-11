@@ -1,9 +1,6 @@
 /* This CSS file defines two distinct visual themes for the ThreatSight application:
   1. Light Theme: A clean, professional, high-contrast "corporate" look with blue accents.
   2. Dark Theme: A "hacker"-style theme with a dark charcoal background and vibrant teal accents.
-
-  The themes are controlled by CSS variables, making it easy to manage and customize the color palettes.
-  The `dark` class on the <html> element, toggled by JavaScript, activates the dark theme variables.
 */
 
 :root {
@@ -21,6 +18,8 @@
     --primary-foreground: 248 250 252; /* slate-50 */
     
     --ring: 96 165 250; /* blue-400 */
+
+    --grid-color: rgba(55, 65, 81, 0.1);
 }
 
 .dark {
@@ -36,6 +35,8 @@
     --primary-foreground: 240 253 250; /* teal-50 */
 
     --ring: 45 212 191; /* teal-400 */
+
+    --grid-color: rgba(107, 114, 128, 0.1);
 }
 
 /* Base body styles using CSS variables for theming */
@@ -44,6 +45,67 @@ body {
     background-color: rgb(var(--background));
     color: rgb(var(--foreground));
 }
+
+/* --- Animated Background --- */
+#background-animation {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    z-index: -1;
+    overflow: hidden;
+    background-color: rgb(var(--background));
+}
+
+#background-animation::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 200%;
+    height: 200%;
+    background-image: 
+        linear-gradient(to right, var(--grid-color) 1px, transparent 1px),
+        linear-gradient(to bottom, var(--grid-color) 1px, transparent 1px);
+    background-size: 50px 50px;
+    animation: moveGrid 20s linear infinite;
+}
+
+@keyframes moveGrid {
+    from { transform: translate(0, 0); }
+    to { transform: translate(-50px, -50px); }
+}
+
+
+/* --- Splash Screen --- */
+.tagline {
+    border-right: 2px solid rgba(var(--foreground), 0.75);
+    white-space: nowrap;
+    overflow: hidden;
+    width: 0;
+    animation: typing 2s steps(40, end) forwards, blink-caret .75s step-end infinite;
+}
+
+@keyframes typing {
+    from { width: 0 }
+    to { width: 100% }
+}
+
+@keyframes blink-caret {
+    from, to { border-color: transparent }
+    50% { border-color: rgba(var(--foreground), 0.75); }
+}
+
+.fade-out {
+    opacity: 0;
+    pointer-events: none;
+}
+
+.fade-in {
+    opacity: 1;
+}
+
 
 /* Helper classes to apply theme colors to elements */
 .bg-background { background-color: rgb(var(--background)); }
@@ -77,6 +139,7 @@ input:focus {
 /* Custom class for the file drop zone highlight effect */
 .hover\:border-primary:hover { border-color: rgb(var(--primary)); }
 .hover\:bg-primary\/10:hover { background-color: rgba(var(--primary), 0.1); }
+.hover\:shadow-primary\/20:hover { box-shadow: 0 10px 15px -3px rgba(var(--primary), 0.1), 0 4px 6px -4px rgba(var(--primary), 0.1); }
 
 
 /* Custom loader animation */
