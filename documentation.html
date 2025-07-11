@@ -81,11 +81,12 @@
                 </ul>
 
                 <h3>File Analysis: Logs & Configurations (Powered by Gemini AI)</h3>
-                <p>When a text-based file is uploaded (e.g., <code>.log</code>, <code>.txt</code>, <code>.json</code>, <code>.xml</code>, <code>.conf</code>, <code>.py</code>, <code>.sh</code>), ThreatSight deploys a specialized **AI Forensics Agent**.</p>
+                <p>When a text-based file is uploaded (e.g., <code>.log</code>, <code>.txt</code>, <code>.json</code>, <code>.xml</code>, <code>.conf</code>, <code>.py</code>, <code>.sh</code>), ThreatSight deploys a specialized **AI Forensics Agent**. This agent operates under the combined best practices of NIST, ACSC, and OWASP.</p>
                 <ul>
-                    <li><strong>Context-Aware Analysis:</strong> The AI is prompted to act as a senior cybersecurity analyst, looking for patterns like repeated failed logins, unauthorized access attempts, hardcoded passwords, insecure settings, and other anomalies that simple scanners might miss.</li>
-                    <li><strong>Professional Report Generation:</strong> If credible issues are found, the AI generates a professional vulnerability report snippet. This includes a summary, a list of technical findings (with potential CVE mappings), and actionable recommendations.</li>
-                    <li><strong>No False Positives:</strong> A key feature of the AI agent is its instruction to report clearly if no issues are found. If a file is clean, the result will state "No security issues found," ensuring users are not chasing non-existent problems.</li>
+                    <li><strong>Context-Aware Analysis:</strong> The AI is prompted to act as a senior cybersecurity analyst, looking for patterns like repeated failed logins, unauthorized access attempts, hardcoded passwords, insecure settings, behavioral anomalies, and application-layer attack patterns.</li>
+                    <li><strong>Structured Dashboard:</strong> The AI returns its findings in a structured format, which are then displayed in a clean, tabbed dashboard. This allows users to easily pivot between different categories of events (e.g., Authentication, Network Activity).</li>
+                    <li><strong>Actionable Intelligence:</strong> Each finding includes a severity level, the relevant timestamp, and a clear, actionable recommendation.</li>
+                    <li><strong>No False Positives:</strong> A key feature of the AI agent is its instruction to report clearly if no issues or notable events are found, ensuring users are not chasing non-existent problems.</li>
                 </ul>
             </main>
         </div>
