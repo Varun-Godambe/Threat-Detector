@@ -17,17 +17,17 @@
     <!-- Animated Background -->
     <div id="background-animation"></div>
 
-    <!-- Splash Screen -->
-    <div id="splash-screen" class="fixed inset-0 z-[100] flex flex-col items-center justify-center bg-background transition-opacity duration-500 ease-in-out">
+    <!-- Clickable Splash Screen -->
+    <div id="splash-screen" class="fixed inset-0 z-[100] flex flex-col items-center justify-center bg-background cursor-pointer">
         <div class="flex items-center gap-4 text-foreground">
             <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="h-12 w-12 text-primary"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path></svg>
             <span class="text-5xl font-bold">ThreatSight</span>
         </div>
-        <p class="tagline mt-4 text-lg text-muted-foreground">Analyzing threats with AI-powered intelligence...</p>
+        <p class="enter-prompt mt-8 text-lg text-muted-foreground">Click to Enter</p>
     </div>
 
     <!-- Main Application Content (Initially Hidden) -->
-    <div id="main-content" class="hidden opacity-0 transition-opacity duration-500">
+    <div id="main-content" class="hidden">
         <!-- Mobile Sidebar Overlay -->
         <div id="sidebar-overlay" class="fixed inset-0 z-40 bg-black bg-opacity-50 hidden md:hidden"></div>
 
@@ -66,7 +66,7 @@
             </div>
 
             <!-- Main Content -->
-            <div class="flex flex-col relative"> <!-- Added relative positioning for z-index context -->
+            <div class="flex flex-col relative">
                 <header class="flex h-14 items-center gap-4 border-b border-border bg-card px-4 lg:h-[60px] lg:px-6">
                     <!-- Mobile Menu Button -->
                     <button id="open-sidebar-btn" class="h-9 w-9 -ml-2 flex items-center justify-center rounded-full text-muted-foreground hover:bg-muted md:hidden">
