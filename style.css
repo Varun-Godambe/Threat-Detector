@@ -1,0 +1,180 @@
+/* This CSS file defines two distinct visual themes for the ThreatSight application:
+  1. Light Theme: A clean, professional, high-contrast "corporate" look with blue accents.
+  2. Dark Theme: A "hacker"-style theme with a dark charcoal background and vibrant teal accents.
+*/
+
+:root {
+    --font-sans: 'Inter', sans-serif;
+    
+    /* Light Theme (Corporate/Clean) */
+    --background: 248 250 252; /* slate-50 */
+    --foreground: 15 23 42;    /* slate-900 */
+    --card: 255 255 255;       /* white */
+    --border: 226 232 240;      /* slate-200 */
+    --muted: 241 245 249;      /* slate-100 */
+    --muted-foreground: 100 116 139; /* slate-500 */
+    
+    --primary: 37 99 235;      /* blue-600 */
+    --primary-foreground: 248 250 252; /* slate-50 */
+    
+    --ring: 96 165 250; /* blue-400 */
+
+    --grid-color: rgba(55, 65, 81, 0.1);
+}
+
+.dark {
+    /* Dark Theme (Cyber/Hacker) */
+    --background: 17 24 39;    /* gray-900 */
+    --foreground: 229 231 235;   /* gray-200 */
+    --card: 31 41 55;           /* gray-800 */
+    --border: 55 65 81;         /* gray-700 */
+    --muted: 55 65 81;          /* gray-700 */
+    --muted-foreground: 156 163 175; /* gray-400 */
+    
+    --primary: 20 184 166;      /* teal-500 */
+    --primary-foreground: 240 253 250; /* teal-50 */
+
+    --ring: 45 212 191; /* teal-400 */
+
+    --grid-color: rgba(107, 114, 128, 0.1);
+}
+
+/* Base body styles using CSS variables for theming */
+body {
+    font-family: var(--font-sans);
+    background-color: rgb(var(--background));
+    color: rgb(var(--foreground));
+}
+
+/* --- Animated Background --- */
+#background-animation {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    z-index: -1;
+    overflow: hidden;
+    background-color: rgb(var(--background));
+}
+
+#background-animation::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 200%;
+    height: 200%;
+    background-image: 
+        linear-gradient(to right, var(--grid-color) 1px, transparent 1px),
+        linear-gradient(to bottom, var(--grid-color) 1px, transparent 1px);
+    background-size: 50px 50px;
+    animation: moveGrid 20s linear infinite;
+}
+
+@keyframes moveGrid {
+    from { transform: translate(0, 0); }
+    to { transform: translate(-50px, -50px); }
+}
+
+
+/* --- Splash Screen --- */
+.enter-prompt {
+    animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+
+@keyframes pulse {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: .5;
+  }
+}
+
+#splash-screen.fade-out {
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.5s ease-out;
+}
+
+#main-content.fade-in {
+    opacity: 1;
+    transition: opacity 0.5s ease-in;
+}
+
+
+/* Helper classes to apply theme colors to elements */
+.bg-background { background-color: rgb(var(--background)); }
+.bg-card { background-color: rgb(var(--card)); }
+.bg-muted { background-color: rgb(var(--muted)); }
+.text-foreground { color: rgb(var(--foreground)); }
+.text-muted-foreground { color: rgb(var(--muted-foreground)); }
+.text-primary { color: rgb(var(--primary)); }
+.text-primary-foreground { color: rgb(var(--primary-foreground)); }
+.border-border { border-color: rgb(var(--border)); }
+
+/* Themed button styles */
+.main-button {
+    background-color: rgb(var(--primary));
+}
+.main-button:hover {
+    filter: brightness(1.1);
+}
+.main-button:focus {
+    outline: 2px solid transparent;
+    outline-offset: 2px;
+    box-shadow: 0 0 0 4px rgba(var(--ring), 0.5);
+}
+
+/* Themed input focus ring */
+input:focus {
+    border-color: rgb(var(--primary)) !important;
+    box-shadow: 0 0 0 1px rgb(var(--primary)) !important;
+}
+
+/* Custom class for the file drop zone highlight effect */
+.hover\:border-primary:hover { border-color: rgb(var(--primary)); }
+.hover\:bg-primary\/10:hover { background-color: rgba(var(--primary), 0.1); }
+.hover\:shadow-primary\/20:hover { box-shadow: 0 10px 15px -3px rgba(var(--primary), 0.1), 0 4px 6px -4px rgba(var(--primary), 0.1); }
+
+
+/* Custom loader animation */
+.loader {
+    border: 4px solid rgb(var(--muted));
+    border-top: 4px solid rgb(var(--primary));
+    border-radius: 50%;
+    width: 40px;
+    height: 40px;
+    animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+/* Custom animation for fading in the results container */
+.results-fade-in {
+    animation: fadeIn 0.5s ease-in-out forwards;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(20px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+/* Tab styling */
+.tab-btn.active-tab {
+    border-color: rgb(var(--primary));
+    color: rgb(var(--primary));
+}
+
+.tab-btn.inactive-tab {
+    border-color: transparent;
+    color: rgb(var(--muted-foreground));
+}
+
+.tab-btn:hover {
+    color: rgb(var(--foreground));
+}
