@@ -2,7 +2,6 @@
 // This module now communicates with our own secure serverless functions
 // for ALL external API calls, ensuring no keys are exposed to the browser.
 
-// The proxy endpoints for all external requests
 const VT_PROXY_URL = '/.netlify/functions/virustotal';
 const GEMINI_PROXY_URL = '/.netlify/functions/gemini';
 
@@ -21,21 +20,15 @@ function fileToBase64(file) {
 }
 
 /**
- * Analyzes log or configuration files by calling our secure Gemini proxy function.
- * @param {File[]} files - An array of file objects to be analyzed.
+ * Sends anonymized log content to our secure Gemini proxy function.
+ * @param {string} anonymizedContent - The pre-sanitized log content.
  * @returns {Promise<object>} A promise that resolves to the structured JSON analysis from the AI.
  */
-export async function runAiLogAnalysis(files) {
-    let combinedContent = '';
-    for (const file of files) {
-        const content = await file.text();
-        combinedContent += `--- START OF FILE: ${file.name} ---\n\n${content}\n\n--- END OF FILE: ${file.name} ---\n\n`;
-    }
-
+export async function runAiAnalysis(anonymizedContent) {
     const response = await fetch(GEMINI_PROXY_URL, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ combinedContent })
+        body: JSON.stringify({ anonymizedContent })
     });
 
     const result = await response.json();
