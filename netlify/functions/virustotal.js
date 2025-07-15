@@ -1,4 +1,4 @@
-// This is your serverless function running on Netlify's backend.
+// This is a serverless function running on Netlify's backend.
 // It acts as a secure proxy to VirusTotal.
 
 const fetch = require('node-fetch');
